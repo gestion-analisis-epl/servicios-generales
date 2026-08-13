@@ -1,10 +1,8 @@
 export interface Office {
   codigo: string;
   ciudad: string;
-  plaza: string;
   tipoOficina: string;
   domicilio: string;
-  metrosCuadrados: string | number;
   empresa: string;
   arrendador: string;
   inicioVigencia: string;
@@ -19,16 +17,15 @@ export interface Office {
   renovado: string;
   urlImagen: string;
   observaciones: string;
+  legal: boolean;
 }
 
 export function createOffice(fields: Partial<Office>): Office {
   return {
     codigo: orEmpty(fields.codigo),
     ciudad: orEmpty(fields.ciudad),
-    plaza: orEmpty(fields.plaza),
     tipoOficina: orEmpty(fields.tipoOficina),
     domicilio: orEmpty(fields.domicilio),
-    metrosCuadrados: fields.metrosCuadrados ?? '',
     empresa: orEmpty(fields.empresa),
     arrendador: orEmpty(fields.arrendador),
     inicioVigencia: orEmpty(fields.inicioVigencia),
@@ -42,7 +39,8 @@ export function createOffice(fields: Partial<Office>): Office {
     fechaUltimoPago: orEmpty(fields.fechaUltimoPago),
     renovado: orEmpty(fields.renovado),
     urlImagen: orEmpty(fields.urlImagen),
-    observaciones: orEmpty(fields.observaciones)
+    observaciones: orEmpty(fields.observaciones),
+    legal: fields.legal ?? false
   };
 }
 

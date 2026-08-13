@@ -7,7 +7,7 @@ export interface OfficeTableRow {
   inicioVigencia: string;
   finVigencia: string;
   estado: string;
-  observaciones: string;
+  legal: string;
 }
 
 export function getOfficesTableRows(offices: Office[]): OfficeTableRow[] {
@@ -18,7 +18,7 @@ export function getOfficesTableRows(offices: Office[]): OfficeTableRow[] {
     inicioVigencia: formatTableDate(o.inicioVigencia),
     finVigencia: formatTableDate(o.finVigencia),
     estado: o.estadoVigencia,
-    observaciones: o.observaciones || ''
+    legal: o.legal ? 'Sí' : 'No'
   }));
 }
 

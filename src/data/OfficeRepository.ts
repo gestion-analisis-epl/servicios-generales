@@ -1,6 +1,6 @@
 import { getSheetRows } from './sheetsClient';
 import { createOffice, Office } from '../domain/entities/Office';
-import { parseMoney, parseSheetDate } from './parsers';
+import { parseBoolean, parseMoney, parseSheetDate } from './parsers';
 
 const OFFICE_SHEET_NAME = 'Data';
 
@@ -13,10 +13,8 @@ function mapRowToOffice(row: Record<string, unknown>): Office {
   return createOffice({
     codigo: str(row['CÓDIGO']),
     ciudad: str(row['CIUDAD']),
-    plaza: str(row['PLAZA']),
     tipoOficina: str(row['TIPO DE OFICINA']),
     domicilio: str(row['DOMICILIO']),
-    metrosCuadrados: str(row['METROS CUADRADOS ']),
     empresa: str(row['EMPRESA NOMBRE CORTO']),
     arrendador: str(row['SUB ARRENDADOR']),
     inicioVigencia: parseSheetDate(row['INICIO VIGENCIA']),
@@ -30,7 +28,8 @@ function mapRowToOffice(row: Record<string, unknown>): Office {
     fechaUltimoPago: parseSheetDate(row['FECHA ULTIMO PAGO']),
     renovado: str(row['RENOVADO']),
     urlImagen: str(row['URL IMAGEN']),
-    observaciones: str(row['OBSERVACIONES ESPECIFICAS/HISTORIAL DE INCIDENCIAS'])
+    observaciones: str(row['OBSERVACIONES ESPECIFICAS/HISTORIAL DE INCIDENCIAS']),
+    legal: parseBoolean(row['LEGAL'])
   });
 }
 

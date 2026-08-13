@@ -97,6 +97,11 @@ const ESTADO_BADGE_CLASSES: Record<string, string> = {
   '🟠 INDETERMINADO': 'bg-slate-100 text-slate-600'
 };
 
+const LEGAL_BADGE_CLASSES: Record<string, string> = {
+  'Sí': 'bg-emerald-100 text-emerald-700',
+  'No': 'bg-rose-100 text-rose-700'
+};
+
 function Badge({ text, className }: { text: string; className: string }) {
   if (!text) return null;
   return <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${className}`}>{text}</span>;
@@ -115,7 +120,7 @@ const CONTRATOS_COLUMNS: { key: keyof ContratoRow; label: string }[] = [
   { key: 'totalFactura', label: 'Total Factura' },
   { key: 'fechaUltimoPago', label: 'Fecha Último Pago' },
   { key: 'renovado', label: 'Renovado' },
-  { key: 'observaciones', label: 'Observaciones' }
+  { key: 'legal', label: 'Legal' }
 ];
 
 const DEFAULT_COL_WIDTH = 150;
@@ -265,6 +270,8 @@ function ContratosTable({ rows }: { rows: ContratoRow[] }) {
                   <td key={col.key} className="px-3 py-2.5 border-b border-slate-200 truncate">
                     {col.key === 'vigencia' ? (
                       <Badge text={row.vigencia} className={ESTADO_BADGE_CLASSES[row.vigencia] || 'bg-slate-100 text-slate-600'} />
+                    ) : col.key === 'legal' ? (
+                      <Badge text={row.legal} className={LEGAL_BADGE_CLASSES[row.legal] || 'bg-slate-100 text-slate-600'} />
                     ) : (
                       displayValue(row, col.key)
                     )}

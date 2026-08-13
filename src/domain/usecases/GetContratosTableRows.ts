@@ -13,7 +13,7 @@ export interface ContratoRow {
   totalFactura: number;
   fechaUltimoPago: string;
   renovado: string;
-  observaciones: string;
+  legal: string;
 }
 
 export function getContratosTableRows(offices: Office[]): ContratoRow[] {
@@ -30,6 +30,6 @@ export function getContratosTableRows(offices: Office[]): ContratoRow[] {
     totalFactura: o.totalFactura,
     fechaUltimoPago: o.fechaUltimoPago,
     renovado: o.renovado,
-    observaciones: o.observaciones
+    legal: o.legal ? 'Sí' : 'No'
   }));
 }

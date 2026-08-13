@@ -5,6 +5,12 @@ export function parseMoney(raw: unknown): number {
   return isNaN(value) ? 0 : value;
 }
 
+export function parseBoolean(raw: unknown): boolean {
+  if (typeof raw === 'boolean') return raw;
+  const text = String(raw ?? '').trim().toUpperCase();
+  return text === 'TRUE' || text === 'VERDADERO' || text === 'SÍ' || text === 'SI' || text === '1';
+}
+
 export function parseSheetDate(raw: unknown): string {
   if (raw === undefined || raw === null || raw === '') return '';
 

@@ -75,14 +75,15 @@ export default function FichaPage() {
 
 function OfficeSearchCombobox({ offices, onSelect }: { offices: Office[]; onSelect: (office: Office) => void }) {
   const [query, setQuery] = useState('');
+  const [typing, setTyping] = useState(false);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const matches = useMemo(() => {
     const q = query.trim().toUpperCase();
-    if (!q) return offices;
+    if (!typing || !q) return offices;
     return offices.filter((o) => o.codigo.toUpperCase().includes(q));
-  }, [offices, query]);
+  }, [offices, query, typing]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -95,7 +96,13 @@ function OfficeSearchCombobox({ offices, onSelect }: { offices: Office[]; onSele
   function handleSelect(office: Office) {
     onSelect(office);
     setQuery(office.codigo);
+    setTyping(false);
     setOpen(false);
+  }
+
+  function openDropdown() {
+    setOpen(true);
+    setTyping(false);
   }
 
   return (
@@ -103,8 +110,9 @@ function OfficeSearchCombobox({ offices, onSelect }: { offices: Office[]; onSele
       <input
         type="text"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
+        onChange={(e) => { setQuery(e.target.value); setTyping(true); setOpen(true); }}
+        onFocus={(e) => { openDropdown(); e.target.select(); }}
+        onClick={openDropdown}
         placeholder="Ej. AGS-EPL"
         className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm"
       />
@@ -184,9 +192,7 @@ function OfficeFicha({ office, tickets, categorias }: { office: Office; tickets:
         <Panel title="Ubicación">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ciudad" value={office.ciudad} />
-            <Field label="Plaza" value={office.plaza} />
             <Field label="Tipo de Oficina" value={office.tipoOficina} />
-            <Field label="Metros Cuadrados" value={office.metrosCuadrados} />
             <div className="col-span-2">
               <Field label="Domicilio" value={office.domicilio} />
             </div>
@@ -198,9 +204,26 @@ function OfficeFicha({ office, tickets, categorias }: { office: Office; tickets:
             <Field label="Inicio Vigencia" value={formatDate(office.inicioVigencia)} />
             <Field label="Fin Vigencia" value={formatDate(office.finVigencia)} />
             <Field label="Estado de Vigencia" value={<Badge text={office.estadoVigencia} className={ESTADO_BADGE_CLASSES[office.estadoVigencia] || 'bg-slate-100 text-slate-600'} />} />
+            <Field label="Legal" value={<Badge text={office.legal ? 'Sí' : 'No'} className={office.legal ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'} />} />
             <Field label="Renovado" value={office.renovado} />
             <Field label="Arrendador" value={office.arrendador} />
           </div>
+        </Panel>
+      </div>
+
+      <div className="flex gap-4 flex-wrap mb-4">
+        <Panel title="Mapa">
+          {office.domicilio ? (
+            <iframe
+              title={`Mapa — ${office.codigo}`}
+              className="w-full h-72 rounded-lg border border-slate-200"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(office.domicilio)}&output=embed`}
+            />
+          ) : (
+            <p className="text-sm text-slate-400">Sin dirección registrada para esta oficina.</p>
+          )}
         </Panel>
       </div>
 
