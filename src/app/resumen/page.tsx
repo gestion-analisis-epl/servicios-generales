@@ -99,7 +99,6 @@ export default function ResumenPage() {
             <Card accent="danger" icon={<IconWarning />} label="Vencidos" value={data.summary.totalVencidos} />
             <Card accent="danger" icon={<IconAlertClock />} label="Críticos" value={data.summary.totalCriticos} />
             <Card accent="warning" icon={<IconClock />} label="Renta Mensual" value={formatMoney(data.summary.totalRentaMensual)} />
-            <LegalCard enLegal={data.summary.totalEnLegal} fueraLegal={data.summary.totalFueraLegal} />
           </CardsRow>
 
           <div className="flex gap-4 flex-wrap mb-6">
@@ -145,28 +144,6 @@ function Card({ accent, icon, label, value }: { accent: keyof typeof ACCENT_CLAS
   );
 }
 
-function LegalCard({ enLegal, fueraLegal }: { enLegal: number; fueraLegal: number }) {
-  return (
-    <div className="bg-white rounded-[10px] shadow-sm px-5 py-4.5 flex-1 min-w-[180px]">
-      <div className="w-10 h-10 rounded-lg mb-3 flex items-center justify-center text-white bg-slate-700">
-        <IconScale />
-      </div>
-      <h3 className="text-xs uppercase text-slate-400 tracking-wide mb-1.5">Situación Legal</h3>
-      <div className="flex items-center gap-4">
-        <div>
-          <p className="text-[22px] font-bold text-emerald-600">{enLegal}</p>
-          <p className="text-[11px] text-slate-400">En legal</p>
-        </div>
-        <div className="w-px h-8 bg-slate-100" />
-        <div>
-          <p className="text-[22px] font-bold text-rose-600">{fueraLegal}</p>
-          <p className="text-[11px] text-slate-400">Fuera de legal</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function icon(path: React.ReactNode) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
@@ -180,7 +157,6 @@ const IconCheck = () => icon(<path d="M20 6 9 17l-5-5" />);
 const IconBuilding = () => icon(<><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>);
 const IconWarning = () => icon(<><path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /></>);
 const IconAlertClock = () => icon(<><circle cx="12" cy="12" r="9" /><path d="M12 8v4l2.5 2.5" /></>);
-const IconScale = () => icon(<><path d="M12 3v18" /><path d="M5 7h14" /><path d="M5 7 2.5 13a2.5 2.5 0 0 0 5 0Z" /><path d="M19 7l-2.5 6a2.5 2.5 0 0 0 5 0Z" /></>);
 
 function Panel({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
