@@ -36,8 +36,12 @@ Copia `.env.local.example` a `.env.local` y completa:
 - `GOOGLE_PRIVATE_KEY`
 - `GOOGLE_SHEET_ID`
 - `TICKET_ASIGNADO_FILTRO` — nombre exacto (columna "Asignado A") por el que se filtran los tickets mostrados en la app.
+- `GEMINI_API_KEY` — API key gratuita de Google AI Studio, usada para sugerir la categoría de tickets marcados como "OTRO".
+- `GEMINI_MODEL` — opcional, modelo de Gemini a usar (por defecto `gemini-2.0-flash`).
 
 Ninguna de estas variables debe subirse al repositorio.
+
+El service account de Google necesita permiso de **Editor** (no solo Viewer) sobre el spreadsheet, ya que la corrección de categoría escribe en la hoja "Datos Tickets". Esa hoja debe tener una columna con el encabezado exacto `Categoría Corregida`.
 
 ## Desarrollo
 

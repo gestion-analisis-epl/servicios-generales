@@ -18,6 +18,15 @@ export async function fetchJsonCached<T>(url: string, ttlMs: number): Promise<T>
   return data;
 }
 
+export function invalidateCachedUrl(url: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(CACHE_PREFIX + url);
+  } catch {
+    // no-op si localStorage no está disponible
+  }
+}
+
 function readCache(key: string): unknown | null {
   if (typeof window === 'undefined') return null;
 

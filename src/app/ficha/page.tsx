@@ -169,7 +169,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function OfficeFicha({ office, tickets, categorias }: { office: Office; tickets: TicketDetailRow[]; categorias: CategoriaTotal[] }) {
+function OfficeFicha({ office, tickets, categorias }: {
+  office: Office;
+  tickets: TicketDetailRow[];
+  categorias: CategoriaTotal[];
+}) {
   const [ticketsDialog, setTicketsDialog] = useState<{ title: string; categoria: string | null } | null>(null);
   const [ticketDetailRow, setTicketDetailRow] = useState<TicketDetailRow | null>(null);
 
@@ -270,7 +274,7 @@ function OfficeFicha({ office, tickets, categorias }: { office: Office; tickets:
       {ticketsDialog && (
         <TicketsDialog
           title={ticketsDialog.title}
-          rows={ticketsDialog.categoria ? tickets.filter((t) => t.categoria === ticketsDialog.categoria) : tickets}
+          rows={ticketsDialog.categoria ? tickets.filter((t) => t.categoriaEfectiva === ticketsDialog.categoria) : tickets}
           onClose={() => setTicketsDialog(null)}
           onRowClick={setTicketDetailRow}
         />

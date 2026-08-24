@@ -9,6 +9,8 @@ import { getTicketsByPlaza } from '@/domain/usecases/GetTicketsByPlaza';
 import { getTiempoPromedioPorCategoria } from '@/domain/usecases/GetTiempoPromedioPorCategoria';
 import { getTicketsPorMes } from '@/domain/usecases/GetTicketsPorMes';
 import { getTicketYears } from '@/domain/usecases/GetTicketYears';
+import { getEffectiveCategoria } from '@/domain/usecases/GetEffectiveCategoria';
+import { getDistinctCategorias } from '@/domain/usecases/GetDistinctCategorias';
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -22,6 +24,7 @@ export async function GET(request: NextRequest) {
 
   const allTickets = await findAllTickets();
   const tickets = filterTickets(allTickets, filters);
+  const ticketsConCategoriaEfectiva = tickets.map((t) => ({ ...t, categoria: getEffectiveCategoria(t.categoria, t.categoriaCorregida) }));
 
   return NextResponse.json({
     filterOptions: {
@@ -30,11 +33,12 @@ export async function GET(request: NextRequest) {
     data: {
       ticketsSummary: getTicketsSummary(tickets),
       ticketsDetail: getTicketsDetail(tickets),
-      ticketsByCategoria: getTicketsByCategoria(tickets),
+      ticketsByCategoria: getTicketsByCategoria(ticketsConCategoriaEfectiva),
       ticketsByEstatus: getTicketsByEstatus(tickets),
       ticketsByPlaza: getTicketsByPlaza(tickets),
-      tiempoPromedioPorCategoria: getTiempoPromedioPorCategoria(tickets),
-      ticketsPorMes: getTicketsPorMes(tickets)
+      tiempoPromedioPorCategoria: getTiempoPromedioPorCategoria(ticketsConCategoriaEfectiva),
+      ticketsPorMes: getTicketsPorMes(tickets),
+      categoriaOptions: getDistinctCategorias(allTickets)
     }
   });
 }

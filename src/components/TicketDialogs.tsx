@@ -136,7 +136,7 @@ export function TicketsDialog({ title, rows, onClose, onRowClick }: { title: str
                       {col.key === 'estatus' ? (
                         <Badge text={row.estatus} className={ESTATUS_BADGE_CLASSES[row.estatus] || 'bg-slate-100 text-slate-600'} />
                       ) : col.key === 'categoria' ? (
-                        <Badge text={row.categoria} className={categoriaBadgeClass(row.categoria)} />
+                        <Badge text={row.categoriaEfectiva} className={categoriaBadgeClass(row.categoriaEfectiva)} />
                       ) : (
                         row[col.key]
                       )}
@@ -193,7 +193,7 @@ export function TicketDetailDialog({ row, onClose }: { row: TicketDetailRow; onC
                 {field.key === 'estatus' ? (
                   <Badge text={row.estatus} className={`self-start ${ESTATUS_BADGE_CLASSES[row.estatus] || 'bg-slate-100 text-slate-600'}`} />
                 ) : field.key === 'categoria' ? (
-                  <Badge text={row.categoria} className={`self-start ${categoriaBadgeClass(row.categoria)}`} />
+                  <Badge text={row.categoriaEfectiva} className={`self-start ${categoriaBadgeClass(row.categoriaEfectiva)}`} />
                 ) : (
                   <span className="text-sm">{row[field.key] || '-'}</span>
                 )}

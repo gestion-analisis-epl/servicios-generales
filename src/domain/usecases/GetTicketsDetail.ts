@@ -1,12 +1,15 @@
 import { Ticket } from '../entities/Ticket';
 import { formatTableDate } from './GetOfficesTableRows';
 import { formatDuration } from './FormatDuration';
+import { getEffectiveCategoria } from './GetEffectiveCategoria';
 
 export interface TicketDetailRow {
   folio: string;
   departamento: string;
   empresa: string;
   categoria: string;
+  categoriaCorregida: string;
+  categoriaEfectiva: string;
   tipo: string;
   estatus: string;
   solicita: string;
@@ -25,6 +28,8 @@ export function getTicketsDetail(tickets: Ticket[], estatusFiltro?: string | nul
     departamento: t.departamento,
     empresa: t.empresa,
     categoria: t.categoria,
+    categoriaCorregida: t.categoriaCorregida,
+    categoriaEfectiva: getEffectiveCategoria(t.categoria, t.categoriaCorregida),
     tipo: t.tipo,
     estatus: t.estatus,
     solicita: t.solicita,

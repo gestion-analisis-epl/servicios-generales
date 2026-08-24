@@ -17,7 +17,7 @@ export async function GET() {
   Object.entries(ticketMatch).forEach(([codigo, matchedTickets]) => {
     const detail = getTicketsDetail(matchedTickets);
     ticketsByOffice[codigo] = detail;
-    ticketCategoriaTotalsByOffice[codigo] = getTicketsByCategoria(detail);
+    ticketCategoriaTotalsByOffice[codigo] = getTicketsByCategoria(detail.map((d) => ({ categoria: d.categoriaEfectiva })));
   });
 
   return NextResponse.json({

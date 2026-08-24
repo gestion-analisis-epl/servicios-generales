@@ -4,6 +4,7 @@ export interface Ticket {
   departamento: string;
   tipo: string;
   categoria: string;
+  categoriaCorregida: string;
   estatus: string;
   solicita: string;
   solicitud: string;
@@ -23,6 +24,7 @@ export function createTicket(fields: Partial<Ticket>): Ticket {
     departamento: orEmpty(fields.departamento),
     tipo: orEmpty(fields.tipo),
     categoria: orEmpty(fields.categoria),
+    categoriaCorregida: orEmpty(fields.categoriaCorregida),
     estatus: orEmpty(fields.estatus),
     solicita: orEmpty(fields.solicita),
     solicitud: orEmpty(fields.solicitud),

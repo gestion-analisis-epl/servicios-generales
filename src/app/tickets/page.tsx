@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MultiSelectFilter } from '@/components/MultiSelectFilter';
 import { TicketsDialog, TicketDetailDialog } from '@/components/TicketDialogs';
+import Link from 'next/link';
 import { fetchJsonCached } from '@/lib/fetchCache';
 import type { TicketsSummary } from '@/domain/usecases/GetTicketsSummary';
 import type { TicketDetailRow } from '@/domain/usecases/GetTicketsDetail';
@@ -20,6 +21,7 @@ interface TicketsData {
   ticketsByPlaza: PlazaTotal[];
   tiempoPromedioPorCategoria: TiempoPromedioCategoria[];
   ticketsPorMes: MesTotal[];
+  categoriaOptions: string[];
 }
 
 interface FilterOptions {
@@ -81,10 +83,18 @@ export default function TicketsPage() {
     return () => { cancelled = true; };
   }, [filters]);
 
+  const totalOtro = data?.ticketsDetail.filter((t) => t.categoria === 'OTRO' && !t.categoriaCorregida).length || 0;
+
   return (
     <div className="p-6">
-      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center px-6 border-b border-slate-200 bg-white">
+      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center justify-between px-6 border-b border-slate-200 bg-white">
         <h1 className="text-lg font-bold">Tickets</h1>
+        <Link
+          href="/tickets/otros"
+          className="rounded-md px-3.5 py-1.5 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+        >
+          Corregir categoría OTRO {totalOtro > 0 ? `(${totalOtro})` : ''}
+        </Link>
       </header>
 
       {error && (
