@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { MultiSelectFilter } from '@/components/MultiSelectFilter';
 import type { TicketDetailRow } from '@/domain/usecases/GetTicketsDetail';
 
 export const ESTATUS_BADGE_CLASSES: Record<string, string> = {
@@ -47,10 +48,21 @@ const TICKET_DIALOG_COLUMNS: { key: keyof TicketDetailRow; label: string }[] = [
 const DEFAULT_COL_WIDTH = 150;
 const MIN_COL_WIDTH = 70;
 
+const SEARCHABLE_FIELDS: (keyof TicketDetailRow)[] = [
+  'folio', 'empresa', 'departamento', 'tipo', 'estatus', 'solicita', 'solicitud', 'plaza', 'categoriaEfectiva'
+];
+
+function ticketDisplayValue(row: TicketDetailRow, key: keyof TicketDetailRow): string {
+  if (key === 'categoria') return row.categoriaEfectiva;
+  return String(row[key] ?? '');
+}
+
 export function TicketsDialog({ title, rows, onClose, onRowClick }: { title: string; rows: TicketDetailRow[]; onClose: () => void; onRowClick: (row: TicketDetailRow) => void }) {
   const [sortKey, setSortKey] = useState<keyof TicketDetailRow>('folio');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [colWidths, setColWidths] = useState<Partial<Record<keyof TicketDetailRow, number>>>({});
+  const [search, setSearch] = useState('');
+  const [columnFilters, setColumnFilters] = useState<Partial<Record<keyof TicketDetailRow, string[]>>>({});
   const resizing = useRef<{ key: keyof TicketDetailRow; startX: number; startWidth: number } | null>(null);
 
   function toggleSort(key: keyof TicketDetailRow) {
@@ -58,13 +70,29 @@ export function TicketsDialog({ title, rows, onClose, onRowClick }: { title: str
     else { setSortKey(key); setSortDir('asc'); }
   }
 
-  const sorted = [...rows].sort((a, b) => {
-    const va = a[sortKey];
-    const vb = b[sortKey];
+  const searchTerm = search.trim().toUpperCase();
+  const searched = searchTerm
+    ? rows.filter((row) => SEARCHABLE_FIELDS.some((key) => String(row[key] ?? '').toUpperCase().includes(searchTerm)))
+    : rows;
+
+  const filtered = searched.filter((row) =>
+    TICKET_DIALOG_COLUMNS.every((col) => {
+      const active = columnFilters[col.key];
+      return !active || active.includes(ticketDisplayValue(row, col.key));
+    })
+  );
+
+  const sorted = [...filtered].sort((a, b) => {
+    const va = sortKey === 'categoria' ? a.categoriaEfectiva : a[sortKey];
+    const vb = sortKey === 'categoria' ? b.categoriaEfectiva : b[sortKey];
     if (va < vb) return sortDir === 'asc' ? -1 : 1;
     if (va > vb) return sortDir === 'asc' ? 1 : -1;
     return 0;
   });
+
+  function uniqueColumnValues(key: keyof TicketDetailRow): string[] {
+    return Array.from(new Set(rows.map((r) => ticketDisplayValue(r, key)))).sort();
+  }
 
   function onResizeStart(e: React.MouseEvent, key: keyof TicketDetailRow) {
     e.preventDefault();
@@ -90,18 +118,25 @@ export function TicketsDialog({ title, rows, onClose, onRowClick }: { title: str
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-[10px] shadow-lg w-full max-w-5xl max-h-[85vh] flex flex-col"
+        className="bg-white rounded-[10px] shadow-lg w-full max-w-[95vw] xl:max-w-[1400px] h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="text-sm font-semibold">{title} <span className="text-slate-400 font-normal">({rows.length})</span></h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-indigo-600 p-1" title="Cerrar">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 gap-4">
+          <h2 className="text-sm font-semibold whitespace-nowrap">{title} <span className="text-slate-400 font-normal">({sorted.length}{sorted.length !== rows.length ? ` de ${rows.length}` : ''})</span></h2>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por folio, ciudad, categoría, solicitud…"
+            className="border border-slate-200 rounded-md px-3 py-1.5 text-sm w-full max-w-sm"
+          />
+          <button onClick={onClose} className="text-slate-400 hover:text-indigo-600 p-1 shrink-0" title="Cerrar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div className="overflow-auto p-5">
+        <div className="overflow-auto p-5 flex-1">
           <table
             className="text-[13px] border-collapse table-fixed"
             style={{ width: TICKET_DIALOG_COLUMNS.reduce((sum, col) => sum + (colWidths[col.key] ?? DEFAULT_COL_WIDTH), 0) }}
@@ -113,19 +148,31 @@ export function TicketsDialog({ title, rows, onClose, onRowClick }: { title: str
             </colgroup>
             <thead>
               <tr>
-                {TICKET_DIALOG_COLUMNS.map((col) => (
-                  <th key={col.key} className="relative text-left px-3 py-2.5 border-b border-slate-200 bg-slate-50 text-slate-400 uppercase text-[11px] font-semibold">
-                    <span onClick={() => toggleSort(col.key)} className="cursor-pointer select-none block truncate pr-2">
-                      {col.label} {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                    </span>
-                    <span
-                      onMouseDown={(e) => onResizeStart(e, col.key)}
-                      className="absolute top-0 -right-1.5 z-10 h-full w-3 cursor-col-resize flex justify-center group"
-                    >
-                      <span className="h-full w-0.5 group-hover:bg-indigo-400" />
-                    </span>
-                  </th>
-                ))}
+                {TICKET_DIALOG_COLUMNS.map((col) => {
+                  const options = uniqueColumnValues(col.key);
+                  return (
+                    <th key={col.key} className="relative text-left px-3 py-2.5 border-b border-slate-200 bg-slate-50 text-slate-400 uppercase text-[11px] font-semibold">
+                      <div className="flex items-center justify-between gap-1 pr-2">
+                        <span onClick={() => toggleSort(col.key)} className="cursor-pointer select-none truncate">
+                          {col.label} {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                        </span>
+                        <MultiSelectFilter
+                          label=""
+                          options={options}
+                          value={columnFilters[col.key] ?? options}
+                          onChange={(v) => setColumnFilters((f) => ({ ...f, [col.key]: v }))}
+                          compact
+                        />
+                      </div>
+                      <span
+                        onMouseDown={(e) => onResizeStart(e, col.key)}
+                        className="absolute top-0 -right-1.5 z-10 h-full w-3 cursor-col-resize flex justify-center group"
+                      >
+                        <span className="h-full w-0.5 group-hover:bg-indigo-400" />
+                      </span>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -144,7 +191,7 @@ export function TicketsDialog({ title, rows, onClose, onRowClick }: { title: str
                   ))}
                 </tr>
               ))}
-              {rows.length === 0 && (
+              {sorted.length === 0 && (
                 <tr>
                   <td colSpan={TICKET_DIALOG_COLUMNS.length} className="px-3 py-6 text-center text-slate-400">
                     Sin tickets para mostrar.
