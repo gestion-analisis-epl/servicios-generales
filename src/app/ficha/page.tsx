@@ -140,7 +140,7 @@ function OfficeSearchCombobox({ offices, onSelect }: { offices: Office[]; onSele
 
 const ESTADO_BADGE_CLASSES: Record<string, string> = {
   '⛔ VENCIDO': 'bg-rose-100 text-rose-700',
-  '🔴 CRÍTICO': 'bg-rose-50 text-rose-600',
+  '🔴 URGENTE': 'bg-rose-50 text-rose-600',
   '🟡 PRÓXIMO': 'bg-amber-100 text-amber-700',
   '🟢 A TIEMPO': 'bg-emerald-100 text-emerald-700',
   '🟠 INDETERMINADO': 'bg-slate-100 text-slate-600'

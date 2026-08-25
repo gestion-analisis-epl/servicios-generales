@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     filterOptions: {
       ciudades: uniqueSorted(allOffices.map((o) => o.ciudad)),
       oficinas: uniqueSorted(allOffices.map((o) => o.codigo)),
-      estados: ['⛔ VENCIDO', '🔴 CRÍTICO', '🟡 PRÓXIMO', '🟢 A TIEMPO', '🟠 INDETERMINADO']
+      estados: ['⛔ VENCIDO', '🔴 URGENTE', '🟡 PRÓXIMO', '🟢 A TIEMPO', '🟠 INDETERMINADO']
     },
     data: {
       pagosSummary: getPagosSummary(offices),

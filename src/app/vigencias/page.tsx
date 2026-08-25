@@ -88,7 +88,7 @@ export default function VigenciasPage() {
         <div className="flex gap-4 flex-wrap mb-6">
           <Card accent="success" icon={<IconCheck />} label="Vigentes" value={summary.vigentes} />
           <Card accent="warning" icon={<IconClock />} label="Próximos" value={summary.proximos} />
-          <Card accent="danger" icon={<IconAlertClock />} label="Críticos" value={summary.criticos} />
+          <Card accent="danger" icon={<IconAlertClock />} label="Urgentes" value={summary.criticos} />
           <Card accent="neutral" icon={<IconWarning />} label="Indeterminado" value={summary.indeterminados} />
         </div>
       )}
@@ -135,7 +135,7 @@ const LABEL_WIDTH_PX = 160;
 
 const BAR_COLOR_CLASSES: Record<string, string> = {
   '⛔ VENCIDO': 'bg-rose-500',
-  '🔴 CRÍTICO': 'bg-rose-400',
+  '🔴 URGENTE': 'bg-rose-400',
   '🟡 PRÓXIMO': 'bg-amber-500',
   '🟢 A TIEMPO': 'bg-emerald-500',
   '🟠 INDETERMINADO': 'bg-slate-400'

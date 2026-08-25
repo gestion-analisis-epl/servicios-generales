@@ -50,6 +50,6 @@ function orEmpty(value: string | undefined): string {
 
 export const ESTADO_A_TIEMPO = '🟢 A TIEMPO';
 export const ESTADO_VENCIDO = '⛔ VENCIDO';
-export const ESTADO_CRITICO = '🔴 CRÍTICO';
+export const ESTADO_CRITICO = '🔴 URGENTE';
 export const ESTADO_PROXIMO = '🟡 PRÓXIMO';
 export const ESTADO_INDETERMINADO = '🟠 INDETERMINADO';

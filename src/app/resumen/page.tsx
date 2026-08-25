@@ -97,7 +97,7 @@ export default function ResumenPage() {
             <Card accent="primary" icon={<IconBuilding />} label="Total Oficinas" value={data.summary.totalOficinas} />
             <Card accent="success" icon={<IconCheck />} label="Vigentes" value={data.summary.totalVigentes} />
             <Card accent="danger" icon={<IconWarning />} label="Vencidos" value={data.summary.totalVencidos} />
-            <Card accent="danger" icon={<IconAlertClock />} label="Críticos" value={data.summary.totalCriticos} />
+            <Card accent="danger" icon={<IconAlertClock />} label="Urgentes" value={data.summary.totalCriticos} />
             <Card accent="warning" icon={<IconClock />} label="Renta Mensual" value={formatMoney(data.summary.totalRentaMensual)} />
           </CardsRow>
 
@@ -209,10 +209,10 @@ function FunnelList({ rows }: { rows: PaymentDateTotal[] }) {
   );
 }
 
-const ESTADO_PRIORITY = ['⛔ VENCIDO', '🔴 CRÍTICO', '🟡 PRÓXIMO', '🟢 A TIEMPO', '🟠 INDETERMINADO'];
+const ESTADO_PRIORITY = ['⛔ VENCIDO', '🔴 URGENTE', '🟡 PRÓXIMO', '🟢 A TIEMPO', '🟠 INDETERMINADO'];
 const ESTADO_BADGE_CLASSES: Record<string, string> = {
   '⛔ VENCIDO': 'bg-rose-100 text-rose-700',
-  '🔴 CRÍTICO': 'bg-rose-50 text-rose-600',
+  '🔴 URGENTE': 'bg-rose-50 text-rose-600',
   '🟡 PRÓXIMO': 'bg-amber-100 text-amber-700',
   '🟢 A TIEMPO': 'bg-emerald-100 text-emerald-700',
   '🟠 INDETERMINADO': 'bg-slate-100 text-slate-600'
@@ -265,7 +265,7 @@ function OfficesTable({ rows }: { rows: OfficeTableRow[] }) {
 
   function rowClass(estado: string) {
     if (estado === '⛔ VENCIDO') return 'bg-rose-500/10';
-    if (estado === '🔴 CRÍTICO') return 'bg-rose-500/5';
+    if (estado === '🔴 URGENTE') return 'bg-rose-500/5';
     return '';
   }
 
@@ -395,7 +395,7 @@ function GanttChart({ rows }: { rows: GanttRow[] }) {
         const leftPct = Math.max(0, ((start - timelineStart) / totalSpan) * 100);
         const widthPct = Math.max(0.5, ((end - start) / totalSpan) * 100);
         const diasRestantes = Math.ceil((end - today) / 86400000);
-        const barColor = r.estado === '🔴 CRÍTICO' ? 'bg-rose-500' : 'bg-amber-500';
+        const barColor = r.estado === '🔴 URGENTE' ? 'bg-rose-500' : 'bg-amber-500';
 
         return (
           <div key={i} className="grid grid-cols-[160px_1fr] items-center gap-3 py-1.5">
