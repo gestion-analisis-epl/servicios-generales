@@ -4,6 +4,7 @@ export interface Office {
   tipoOficina: string;
   domicilio: string;
   empresa: string;
+  clasificacion: string;
   arrendador: string;
   inicioVigencia: string;
   finVigencia: string;
@@ -27,6 +28,7 @@ export function createOffice(fields: Partial<Office>): Office {
     tipoOficina: orEmpty(fields.tipoOficina),
     domicilio: orEmpty(fields.domicilio),
     empresa: orEmpty(fields.empresa),
+    clasificacion: orEmpty(fields.clasificacion),
     arrendador: orEmpty(fields.arrendador),
     inicioVigencia: orEmpty(fields.inicioVigencia),
     finVigencia: orEmpty(fields.finVigencia),

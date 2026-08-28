@@ -3,6 +3,7 @@ import { Office } from '../entities/Office';
 export interface ContratoRow {
   codigo: string;
   empresa: string;
+  clasificacion: string;
   tipo: string;
   ciudad: string;
   arrendador: string;
@@ -20,6 +21,7 @@ export function getContratosTableRows(offices: Office[]): ContratoRow[] {
   return offices.map((o) => ({
     codigo: o.codigo,
     empresa: o.empresa,
+    clasificacion: o.clasificacion,
     tipo: o.tipoOficina,
     ciudad: o.ciudad,
     arrendador: o.arrendador,

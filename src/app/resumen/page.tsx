@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { MultiSelectFilter } from '@/components/MultiSelectFilter';
 import { fetchJsonCached } from '@/lib/fetchCache';
 import type { OfficesSummary } from '@/domain/usecases/GetOfficesSummary';
-import type { CompanyTotal } from '@/domain/usecases/GetMonthlyTotalByCompany';
+import type { CompanyTotal, CompanyOffice } from '@/domain/usecases/GetMonthlyTotalByCompany';
 import type { PaymentDateTotal } from '@/domain/usecases/GetUpcomingPaymentTotals';
 import type { OfficeTableRow } from '@/domain/usecases/GetOfficesTableRows';
 import type { GanttRow } from '@/domain/usecases/GetUpcomingExpirationsGantt';
@@ -37,6 +37,8 @@ export default function ResumenPage() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPaymentDate, setSelectedPaymentDate] = useState<PaymentDateTotal | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyTotal | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,7 +88,7 @@ export default function ResumenPage() {
       <div className="flex items-end gap-4 flex-wrap bg-white rounded-lg shadow-sm px-4.5 py-3.5 mb-5">
         <MultiSelectFilter label="Ciudad" options={filterOptions.ciudades} value={filters.ciudades ?? filterOptions.ciudades} onChange={(v) => setFilters((f) => ({ ...f, ciudades: v }))} />
         <MultiSelectFilter label="Oficina" options={filterOptions.oficinas} value={filters.oficinas ?? filterOptions.oficinas} onChange={(v) => setFilters((f) => ({ ...f, oficinas: v }))} />
-        <MultiSelectFilter label="Estado de Vigencia" options={filterOptions.estados} value={filters.estados ?? filterOptions.estados} onChange={(v) => setFilters((f) => ({ ...f, estados: v }))} />
+        <MultiSelectFilter label="Status de Vigencia" options={filterOptions.estados} value={filters.estados ?? filterOptions.estados} onChange={(v) => setFilters((f) => ({ ...f, estados: v }))} />
         <button onClick={() => setFilters(EMPTY_FILTERS)} className="rounded-md px-4 py-1.5 text-sm bg-white border border-slate-200">Limpiar</button>
       </div>
 
@@ -103,10 +105,10 @@ export default function ResumenPage() {
 
           <div className="flex gap-4 flex-wrap mb-6">
             <Panel title="Total Mensual por Empresa">
-              <RankedBarList rows={data.monthlyTotalByCompany} />
+              <RankedBarList rows={data.monthlyTotalByCompany} onSelect={setSelectedCompany} />
             </Panel>
             <Panel title="Próximas Fechas de Pago">
-              <FunnelList rows={data.upcomingPaymentTotals} />
+              <FunnelList rows={data.upcomingPaymentTotals} onSelect={setSelectedPaymentDate} />
             </Panel>
           </div>
 
@@ -119,6 +121,312 @@ export default function ResumenPage() {
           </Panel>
         </>
       )}
+
+      {selectedPaymentDate && (
+        <PaymentDateDialog row={selectedPaymentDate} onClose={() => setSelectedPaymentDate(null)} />
+      )}
+      {selectedCompany && (
+        <CompanyDialog row={selectedCompany} onClose={() => setSelectedCompany(null)} />
+      )}
+    </div>
+  );
+}
+
+interface PaymentDateRow {
+  codigo: string;
+  empresa: string;
+  totalMensual: number;
+  pct: number;
+}
+
+const PAYMENT_DIALOG_COLUMNS: { key: keyof PaymentDateRow; label: string; align: 'left' | 'right' }[] = [
+  { key: 'codigo', label: 'Oficina', align: 'left' },
+  { key: 'empresa', label: 'Empresa', align: 'left' },
+  { key: 'totalMensual', label: 'Monto Mensual', align: 'right' },
+  { key: 'pct', label: '%', align: 'right' }
+];
+
+const PAYMENT_FILTERABLE_COLUMNS: (keyof PaymentDateRow)[] = ['codigo', 'empresa'];
+
+function PaymentDateDialog({ row, onClose }: { row: PaymentDateTotal; onClose: () => void }) {
+  const [sortKey, setSortKey] = useState<keyof PaymentDateRow>('totalMensual');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [columnFilters, setColumnFilters] = useState<Partial<Record<keyof PaymentDateRow, string[]>>>({});
+
+  const totalMonto = row.oficinas.reduce((sum, o) => sum + o.totalMensual, 0);
+  const rows: PaymentDateRow[] = row.oficinas.map((o) => ({
+    codigo: o.codigo,
+    empresa: o.empresa,
+    totalMensual: o.totalMensual,
+    pct: totalMonto ? (o.totalMensual / totalMonto) * 100 : 0
+  }));
+
+  function toggleSort(key: keyof PaymentDateRow) {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir(key === 'codigo' || key === 'empresa' ? 'asc' : 'desc'); }
+  }
+
+  function uniqueColumnValues(key: keyof PaymentDateRow): string[] {
+    return Array.from(new Set(rows.map((r) => String(r[key])))).sort();
+  }
+
+  const filtered = rows.filter((r) =>
+    PAYMENT_FILTERABLE_COLUMNS.every((key) => {
+      const active = columnFilters[key];
+      return !active || active.includes(String(r[key]));
+    })
+  );
+
+  const sorted = [...filtered].sort((a, b) => {
+    const va = a[sortKey];
+    const vb = b[sortKey];
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded-[10px] shadow-lg w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+          <h2 className="text-sm font-semibold">
+            Pagos con vencimiento {row.fecha} <span className="text-slate-400 font-normal">({sorted.length}{sorted.length !== rows.length ? ` de ${rows.length}` : ''})</span>
+          </h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-indigo-600 p-1" title="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-auto p-5 flex-1">
+          <table className="w-full text-[13px] border-collapse">
+            <thead>
+              <tr>
+                {PAYMENT_DIALOG_COLUMNS.map((col) => (
+                  <th key={col.key} className={`px-3 py-2 border-b border-slate-200 bg-slate-50 text-slate-400 uppercase text-[11px] font-semibold ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
+                    <div className={`flex items-center gap-1 ${col.align === 'right' ? 'justify-end' : 'justify-between'}`}>
+                      <span onClick={() => toggleSort(col.key)} className="cursor-pointer select-none whitespace-nowrap">
+                        {col.label} {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                      </span>
+                      {PAYMENT_FILTERABLE_COLUMNS.includes(col.key) && (
+                        <MultiSelectFilter
+                          label=""
+                          options={uniqueColumnValues(col.key)}
+                          value={columnFilters[col.key] ?? uniqueColumnValues(col.key)}
+                          onChange={(v) => setColumnFilters((f) => ({ ...f, [col.key]: v }))}
+                          compact
+                        />
+                      )}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((r, i) => (
+                <tr key={`${r.codigo}-${i}`} className="hover:bg-indigo-50/60">
+                  <td className="px-3 py-2 border-b border-slate-200">{r.codigo}</td>
+                  <td className="px-3 py-2 border-b border-slate-200">{r.empresa}</td>
+                  <td className="px-3 py-2 border-b border-slate-200 text-right">{formatMoney(r.totalMensual)}</td>
+                  <td className="px-3 py-2 border-b border-slate-200 text-right text-slate-500">{r.pct.toFixed(1)}%</td>
+                </tr>
+              ))}
+              {sorted.length === 0 && (
+                <tr>
+                  <td colSpan={PAYMENT_DIALOG_COLUMNS.length} className="px-3 py-6 text-center text-slate-400">
+                    Sin oficinas para mostrar.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={2} className="px-3 py-2 text-left font-semibold">Total</td>
+                <td className="px-3 py-2 text-right font-semibold">{formatMoney(sorted.reduce((sum, r) => sum + r.totalMensual, 0))}</td>
+                <td className="px-3 py-2 text-right font-semibold">{sorted.reduce((sum, r) => sum + r.pct, 0).toFixed(1)}%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface CompanyOfficeRow {
+  codigo: string;
+  totalMensual: number;
+  pct: number;
+  fechaLimitePago: string;
+}
+
+const COMPANY_DIALOG_COLUMNS: { key: keyof CompanyOfficeRow; label: string; align: 'left' | 'right' }[] = [
+  { key: 'codigo', label: 'Oficina', align: 'left' },
+  { key: 'totalMensual', label: 'Monto Mensual', align: 'right' },
+  { key: 'pct', label: '%', align: 'right' },
+  { key: 'fechaLimitePago', label: 'Fecha de Pago', align: 'left' }
+];
+
+const COMPANY_FILTERABLE_COLUMNS: (keyof CompanyOfficeRow)[] = ['codigo', 'fechaLimitePago'];
+const COMPANY_SEARCHABLE_FIELDS: (keyof CompanyOfficeRow)[] = ['codigo', 'fechaLimitePago'];
+
+const COMPANY_DEFAULT_COL_WIDTH = 150;
+const COMPANY_MIN_COL_WIDTH = 70;
+
+function CompanyDialog({ row, onClose }: { row: CompanyTotal; onClose: () => void }) {
+  const [sortKey, setSortKey] = useState<keyof CompanyOfficeRow>('totalMensual');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [colWidths, setColWidths] = useState<Partial<Record<keyof CompanyOfficeRow, number>>>({});
+  const [search, setSearch] = useState('');
+  const [columnFilters, setColumnFilters] = useState<Partial<Record<keyof CompanyOfficeRow, string[]>>>({});
+  const resizing = useRef<{ key: keyof CompanyOfficeRow; startX: number; startWidth: number } | null>(null);
+
+  const rows: CompanyOfficeRow[] = row.oficinas.map((o: CompanyOffice) => ({
+    codigo: o.codigo,
+    totalMensual: o.totalMensual,
+    pct: row.total ? (o.totalMensual / row.total) * 100 : 0,
+    fechaLimitePago: o.fechaLimitePago
+  }));
+
+  function toggleSort(key: keyof CompanyOfficeRow) {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir(key === 'codigo' || key === 'fechaLimitePago' ? 'asc' : 'desc'); }
+  }
+
+  const searchTerm = search.trim().toUpperCase();
+  const searched = searchTerm
+    ? rows.filter((r) => COMPANY_SEARCHABLE_FIELDS.some((key) => String(r[key] ?? '').toUpperCase().includes(searchTerm)))
+    : rows;
+
+  const filtered = searched.filter((r) =>
+    COMPANY_FILTERABLE_COLUMNS.every((key) => {
+      const active = columnFilters[key];
+      return !active || active.includes(String(r[key]));
+    })
+  );
+
+  const sorted = [...filtered].sort((a, b) => {
+    const va = a[sortKey];
+    const vb = b[sortKey];
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  function uniqueColumnValues(key: keyof CompanyOfficeRow): string[] {
+    return Array.from(new Set(rows.map((r) => String(r[key])))).sort();
+  }
+
+  function onResizeStart(e: React.MouseEvent, key: keyof CompanyOfficeRow) {
+    e.preventDefault();
+    e.stopPropagation();
+    resizing.current = { key, startX: e.clientX, startWidth: colWidths[key] ?? COMPANY_DEFAULT_COL_WIDTH };
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeEnd);
+  }
+
+  function onResizeMove(e: MouseEvent) {
+    const r = resizing.current;
+    if (!r) return;
+    const width = Math.max(COMPANY_MIN_COL_WIDTH, r.startWidth + (e.clientX - r.startX));
+    setColWidths((w) => ({ ...w, [r.key]: width }));
+  }
+
+  function onResizeEnd() {
+    resizing.current = null;
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeEnd);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-[10px] shadow-lg w-full max-w-[95vw] xl:max-w-[700px] h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 gap-4">
+          <h2 className="text-sm font-semibold whitespace-nowrap">
+            {row.empresa} <span className="text-slate-400 font-normal">({sorted.length}{sorted.length !== rows.length ? ` de ${rows.length}` : ''})</span>
+          </h2>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por oficina, fecha…"
+            className="border border-slate-200 rounded-md px-3 py-1.5 text-sm w-full max-w-sm"
+          />
+          <button onClick={onClose} className="text-slate-400 hover:text-indigo-600 p-1 shrink-0" title="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-auto p-5 flex-1">
+          <table className="w-full text-[13px] border-collapse table-fixed">
+            <colgroup>
+              {COMPANY_DIALOG_COLUMNS.map((col) => (
+                <col key={col.key} style={colWidths[col.key] ? { width: colWidths[col.key] } : undefined} />
+              ))}
+            </colgroup>
+            <thead>
+              <tr>
+                {COMPANY_DIALOG_COLUMNS.map((col) => {
+                  const options = uniqueColumnValues(col.key);
+                  return (
+                    <th key={col.key} className={`relative px-3 py-2.5 border-b border-slate-200 bg-slate-50 text-slate-400 uppercase text-[11px] font-semibold ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
+                      <div className={`flex items-center gap-1 pr-2 ${col.align === 'right' ? 'justify-end' : 'justify-between'}`}>
+                        <span onClick={() => toggleSort(col.key)} className="cursor-pointer select-none truncate">
+                          {col.label} {sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                        </span>
+                        {COMPANY_FILTERABLE_COLUMNS.includes(col.key) && (
+                          <MultiSelectFilter
+                            label=""
+                            options={options}
+                            value={columnFilters[col.key] ?? options}
+                            onChange={(v) => setColumnFilters((f) => ({ ...f, [col.key]: v }))}
+                            compact
+                          />
+                        )}
+                      </div>
+                      <span
+                        onMouseDown={(e) => onResizeStart(e, col.key)}
+                        className="absolute top-0 -right-1.5 z-10 h-full w-3 cursor-col-resize flex justify-center group"
+                      >
+                        <span className="h-full w-0.5 group-hover:bg-indigo-400" />
+                      </span>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((r, i) => (
+                <tr key={`${r.codigo}-${i}`} className="hover:bg-indigo-50/60">
+                  <td className="px-3 py-2.5 border-b border-slate-200 truncate">{r.codigo}</td>
+                  <td className="px-3 py-2.5 border-b border-slate-200 truncate text-right">{formatMoney(r.totalMensual)}</td>
+                  <td className="px-3 py-2.5 border-b border-slate-200 truncate text-right text-slate-500">{r.pct.toFixed(1)}%</td>
+                  <td className="px-3 py-2.5 border-b border-slate-200 truncate">{r.fechaLimitePago}</td>
+                </tr>
+              ))}
+              {sorted.length === 0 && (
+                <tr>
+                  <td colSpan={COMPANY_DIALOG_COLUMNS.length} className="px-3 py-6 text-center text-slate-400">
+                    Sin arrendamientos para mostrar.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td className="px-3 py-2.5 text-left font-semibold">Total</td>
+                <td className="px-3 py-2.5 text-right font-semibold">{formatMoney(sorted.reduce((sum, r) => sum + r.totalMensual, 0))}</td>
+                <td className="px-3 py-2.5 text-right font-semibold">{sorted.reduce((sum, r) => sum + r.pct, 0).toFixed(1)}%</td>
+                <td />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -160,14 +468,14 @@ const IconAlertClock = () => icon(<><circle cx="12" cy="12" r="9" /><path d="M12
 
 function Panel({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-white rounded-[10px] shadow-sm p-5 flex-1 min-w-[320px] ${className}`}>
+    <div className={`bg-white rounded-[10px] shadow-sm p-5 flex-1 min-w-[320px] flex flex-col ${className}`}>
       <h2 className="text-sm font-semibold mb-4">{title}</h2>
-      {children}
+      <div className="flex-1 flex flex-col min-h-0">{children}</div>
     </div>
   );
 }
 
-function RankedBarList({ rows }: { rows: CompanyTotal[] }) {
+function RankedBarList({ rows, onSelect }: { rows: CompanyTotal[]; onSelect: (row: CompanyTotal) => void }) {
   const max = Math.max(0, ...rows.map((r) => r.total));
   const totalGeneral = rows.reduce((sum, r) => sum + r.total, 0);
 
@@ -177,10 +485,17 @@ function RankedBarList({ rows }: { rows: CompanyTotal[] }) {
         const widthPct = max ? (r.total / max) * 100 : 0;
         const sharePct = totalGeneral ? (r.total / totalGeneral) * 100 : 0;
         return (
-          <div key={r.empresa} title={`${formatMoney(r.total)} (${sharePct.toFixed(1)}% del total)`} className="relative h-[42px] rounded-lg overflow-hidden bg-slate-100 flex items-center">
+          <div
+            key={r.empresa}
+            title={`${formatMoney(r.total)} (${sharePct.toFixed(1)}% del total) — clic para ver detalle`}
+            onClick={() => onSelect(r)}
+            className="relative h-[42px] rounded-lg overflow-hidden bg-slate-100 flex items-center cursor-pointer hover:bg-slate-200/70"
+          >
             <div className="absolute left-0 top-0 h-full rounded-lg bg-indigo-500/15" style={{ width: `${widthPct}%` }} />
             <div className="relative z-10 flex-1 px-3.5 text-sm font-medium truncate">{r.empresa}</div>
-            <div className="relative z-10 px-3.5 text-sm text-slate-400 font-semibold">{formatMoney(r.total)}</div>
+            <div className="relative z-10 px-3.5 text-sm text-slate-400 font-semibold whitespace-nowrap">
+              {formatMoney(r.total)} <span className="text-slate-400/70 font-normal">({sharePct.toFixed(1)}%)</span>
+            </div>
           </div>
         );
       })}
@@ -188,20 +503,35 @@ function RankedBarList({ rows }: { rows: CompanyTotal[] }) {
   );
 }
 
-function FunnelList({ rows }: { rows: PaymentDateTotal[] }) {
+function FunnelList({ rows, onSelect }: { rows: PaymentDateTotal[]; onSelect: (row: PaymentDateTotal) => void }) {
   const max = Math.max(0, ...rows.map((r) => r.totalOficinas));
+  const total = rows.reduce((sum, r) => sum + r.totalOficinas, 0);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex-1 flex flex-col justify-around gap-1.5">
       {rows.map((r) => {
         const widthPct = max ? (r.totalOficinas / max) * 100 : 0;
+        const sharePct = total ? (r.totalOficinas / total) * 100 : 0;
+        const label = `${r.totalOficinas} (${sharePct.toFixed(1)}%)`;
+        const labelFitsInside = widthPct >= 22;
         return (
-          <div key={r.fecha} title={`${r.totalOficinas} oficina(s) con pago el ${r.fecha}`} className="grid grid-cols-[90px_1fr_60px] items-center gap-2.5">
-            <div className="text-xs text-slate-400 text-right">{r.fecha}</div>
-            <div className="flex justify-center">
-              <div className="h-[22px] rounded-md bg-indigo-600 min-w-2" style={{ width: `${widthPct}%` }} />
+          <div
+            key={r.fecha}
+            title={`${r.totalOficinas} oficina(s) con pago el ${r.fecha} — clic para ver detalle`}
+            onClick={() => onSelect(r)}
+            className="grid grid-cols-[90px_1fr] items-center gap-2.5 cursor-pointer group"
+          >
+            <div className="text-xs text-slate-400 text-right group-hover:text-indigo-600">{r.fecha}</div>
+            <div className="flex items-center h-[22px]">
+              <div className="h-full rounded-md bg-indigo-600 group-hover:bg-indigo-700 min-w-2 flex items-center justify-end px-2" style={{ width: `${widthPct}%` }}>
+                {labelFitsInside && (
+                  <span className="text-xs font-semibold text-white whitespace-nowrap">{label}</span>
+                )}
+              </div>
+              {!labelFitsInside && (
+                <span className="text-xs font-semibold text-slate-700 whitespace-nowrap ml-2">{label}</span>
+              )}
             </div>
-            <div className="text-xs font-semibold">{r.totalOficinas}</div>
           </div>
         );
       })}
@@ -226,6 +556,7 @@ const LEGAL_BADGE_CLASSES: Record<string, string> = {
 const TABLE_COLUMNS: { key: keyof OfficeTableRow; label: string }[] = [
   { key: 'codigo', label: 'Código' },
   { key: 'empresa', label: 'Empresa' },
+  { key: 'clasificacion', label: 'Clasificación' },
   { key: 'ciudad', label: 'Ciudad' },
   { key: 'inicioVigencia', label: 'Inicio Vigencia' },
   { key: 'finVigencia', label: 'Fin Vigencia' },

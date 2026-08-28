@@ -3,6 +3,7 @@ import { Office } from '../entities/Office';
 export interface OfficeTableRow {
   codigo: string;
   empresa: string;
+  clasificacion: string;
   ciudad: string;
   inicioVigencia: string;
   finVigencia: string;
@@ -14,6 +15,7 @@ export function getOfficesTableRows(offices: Office[]): OfficeTableRow[] {
   return offices.map((o) => ({
     codigo: o.codigo,
     empresa: o.empresa,
+    clasificacion: o.clasificacion,
     ciudad: o.ciudad,
     inicioVigencia: formatTableDate(o.inicioVigencia),
     finVigencia: formatTableDate(o.finVigencia),

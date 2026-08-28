@@ -177,9 +177,16 @@ function OfficeFicha({ office, tickets, categorias }: {
   const [ticketsDialog, setTicketsDialog] = useState<{ title: string; categoria: string | null } | null>(null);
   const [ticketDetailRow, setTicketDetailRow] = useState<TicketDetailRow | null>(null);
 
+  const tipoCodigo = getTipoCodigoLabel(office.codigo);
+
   return (
     <div>
-      <div className="bg-white rounded-[10px] shadow-sm p-5 mb-4 flex items-center gap-4 flex-wrap">
+      <div className="relative bg-white rounded-[10px] shadow-sm p-5 mb-4 flex items-center gap-4 flex-wrap">
+        {tipoCodigo && (
+          <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-500">
+            {tipoCodigo}
+          </span>
+        )}
         {office.urlImagen ? (
           <img src={office.urlImagen} alt={office.codigo} className="w-24 h-24 rounded-lg object-cover border border-slate-200" />
         ) : (
@@ -197,6 +204,7 @@ function OfficeFicha({ office, tickets, categorias }: {
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ciudad" value={office.ciudad} />
             <Field label="Tipo de Oficina" value={office.tipoOficina} />
+            <Field label="Clasificación" value={office.clasificacion} />
             <div className="col-span-2">
               <Field label="Domicilio" value={office.domicilio} />
             </div>
@@ -307,6 +315,12 @@ function TicketCard({ accent, label, value, onClick }: { accent: keyof typeof TI
       <p className="text-[18px] font-bold">{value}</p>
     </button>
   );
+}
+
+function getTipoCodigoLabel(codigo: string): string | null {
+  if (codigo.includes('01-OFICINA')) return 'OFICINA';
+  if (codigo.includes('02-MTTO')) return 'MANTENIMIENTO';
+  return null;
 }
 
 function formatMoney(value: number): string {

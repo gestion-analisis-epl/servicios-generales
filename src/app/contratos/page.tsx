@@ -110,6 +110,7 @@ function Badge({ text, className }: { text: string; className: string }) {
 const CONTRATOS_COLUMNS: { key: keyof ContratoRow; label: string }[] = [
   { key: 'codigo', label: 'Código' },
   { key: 'empresa', label: 'Empresa' },
+  { key: 'clasificacion', label: 'Clasificación' },
   { key: 'tipo', label: 'Tipo' },
   { key: 'ciudad', label: 'Ciudad' },
   { key: 'arrendador', label: 'Arrendador' },

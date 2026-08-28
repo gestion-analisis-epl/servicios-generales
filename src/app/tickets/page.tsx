@@ -50,7 +50,7 @@ export default function TicketsPage() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [ticketsDialog, setTicketsDialog] = useState<{ title: string; estatus: string | null } | null>(null);
+  const [ticketsDialog, setTicketsDialog] = useState<{ title: string; estatus?: string | null; categoria?: string | null } | null>(null);
   const [ticketDetailRow, setTicketDetailRow] = useState<TicketDetailRow | null>(null);
 
   useEffect(() => {
@@ -135,7 +135,10 @@ export default function TicketsPage() {
 
           <div className="flex gap-4 flex-wrap mb-6">
             <Panel title="Tickets por Categoría">
-              <RankedBarList rows={data.ticketsByCategoria.map((r) => ({ label: r.categoria, total: r.total }))} />
+              <CategoriaRankedBarList
+                rows={data.ticketsByCategoria}
+                onSelect={(categoria) => setTicketsDialog({ title: `Tickets - ${categoria}`, categoria })}
+              />
             </Panel>
             <Panel title="Tickets por Estatus">
               <EstatusDonutChart rows={data.ticketsByEstatus} />
@@ -160,7 +163,13 @@ export default function TicketsPage() {
           {ticketsDialog && (
             <TicketsDialog
               title={ticketsDialog.title}
-              rows={ticketsDialog.estatus ? data.ticketsDetail.filter((t) => t.estatus === ticketsDialog.estatus) : data.ticketsDetail}
+              rows={
+                ticketsDialog.estatus
+                  ? data.ticketsDetail.filter((t) => t.estatus === ticketsDialog.estatus)
+                  : ticketsDialog.categoria
+                  ? data.ticketsDetail.filter((t) => (t.categoriaEfectiva || 'SIN CATEGORÍA') === ticketsDialog.categoria)
+                  : data.ticketsDetail
+              }
               onClose={() => setTicketsDialog(null)}
               onRowClick={setTicketDetailRow}
             />
@@ -222,20 +231,29 @@ function Panel({ title, children, className = '' }: { title: string; children: R
   );
 }
 
-function RankedBarList({ rows }: { rows: { label: string; total: number }[] }) {
+function CategoriaRankedBarList({ rows, onSelect }: { rows: CategoriaTotal[]; onSelect: (categoria: string) => void }) {
   const max = Math.max(0, ...rows.map((r) => r.total));
+  const totalGeneral = rows.reduce((sum, r) => sum + r.total, 0);
 
   if (rows.length === 0) return <p className="text-sm text-slate-400">Sin datos para mostrar.</p>;
 
   return (
-    <div className="flex flex-col gap-2 max-h-[360px] overflow-y-auto pr-1">
+    <div className="flex flex-col gap-2.5 max-h-[360px] overflow-y-auto pr-1">
       {rows.map((r) => {
         const widthPct = max ? (r.total / max) * 100 : 0;
+        const sharePct = totalGeneral ? (r.total / totalGeneral) * 100 : 0;
         return (
-          <div key={r.label} title={`${r.label}: ${r.total} ticket(s)`} className="relative h-[38px] rounded-lg overflow-hidden bg-slate-100 flex items-center">
+          <div
+            key={r.categoria}
+            title={`${r.total} ticket(s) (${sharePct.toFixed(1)}% del total) — clic para ver detalle`}
+            onClick={() => onSelect(r.categoria)}
+            className="relative h-[42px] rounded-lg overflow-hidden bg-slate-100 flex items-center cursor-pointer hover:bg-slate-200/70"
+          >
             <div className="absolute left-0 top-0 h-full rounded-lg bg-indigo-500/15" style={{ width: `${widthPct}%` }} />
-            <div className="relative z-10 flex-1 px-3.5 text-sm font-medium truncate">{r.label}</div>
-            <div className="relative z-10 px-3.5 text-sm text-slate-400 font-semibold">{r.total}</div>
+            <div className="relative z-10 flex-1 px-3.5 text-sm font-medium truncate">{r.categoria}</div>
+            <div className="relative z-10 px-3.5 text-sm text-slate-400 font-semibold whitespace-nowrap">
+              {r.total} <span className="text-slate-400/70 font-normal">({sharePct.toFixed(1)}%)</span>
+            </div>
           </div>
         );
       })}

@@ -16,6 +16,7 @@ function mapRowToOffice(row: Record<string, unknown>): Office {
     tipoOficina: str(row['TIPO DE OFICINA']),
     domicilio: str(row['DOMICILIO']),
     empresa: str(row['EMPRESA NOMBRE CORTO']),
+    clasificacion: str(row['CLASIFICACION']),
     arrendador: str(row['SUB ARRENDADOR']),
     inicioVigencia: parseSheetDate(row['INICIO VIGENCIA']),
     finVigencia: parseSheetDate(row['FIN VIGENCIA']),
