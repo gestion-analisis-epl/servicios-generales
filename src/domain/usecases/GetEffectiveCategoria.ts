@@ -1,3 +1,3 @@
 export function getEffectiveCategoria(categoria: string, categoriaCorregida: string): string {
-  return categoriaCorregida || categoria;
+  return (categoriaCorregida || categoria).trim();
 }

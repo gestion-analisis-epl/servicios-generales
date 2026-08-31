@@ -16,13 +16,34 @@ const CATEGORIA_BADGE_PALETTE = [
   'bg-violet-100 text-violet-700',
   'bg-fuchsia-100 text-fuchsia-700',
   'bg-orange-100 text-orange-700',
+  'bg-red-100 text-red-700',
   'bg-lime-100 text-lime-700',
   'bg-cyan-100 text-cyan-700',
   'bg-rose-100 text-rose-700',
-  'bg-slate-200 text-slate-700'
+  'bg-slate-200 text-slate-700',
+  'bg-blue-100 text-blue-700',
+  'bg-yellow-100 text-yellow-700',
 ];
 
 export function categoriaBadgeClass(categoria: string): string {
+  const overrides: Record<string, string> = {
+    'AIRES ACONDICIONADOS': 'bg-sky-100 text-sky-700',
+    'ARTÍCULOS DE PAPELERÍA': 'bg-fuchsia-100 text-fuchsia-700',
+    'CERRAJERÍA': 'bg-slate-200 text-slate-700',
+    'ELECTRICIDAD': 'bg-yellow-100 text-yellow-700', 
+    'FUMIGACIONES': 'bg-violet-100 text-violet-700', 
+    'GENERAL': 'bg-cyan-100 text-cyan-700',
+    'INSUMOS DE LIMPIEZA': 'bg-teal-100 text-teal-700',
+    'JARDINERÍA': 'bg-lime-100 text-lime-700',
+    'MOBILIARÍO / INFRAESTRUCTURA': 'bg-orange-100 text-orange-700',
+    'PINTURA': 'bg-rose-100 text-rose-700',
+    'PLOMERÍA': 'bg-blue-100 text-blue-700',
+    'PRODUCTOS DE FERRETERIA': 'bg-red-100 text-red-700',
+  };
+  if (overrides[categoria]) {
+    return overrides[categoria];
+  }
+
   let hash = 0;
   for (let i = 0; i < categoria.length; i++) hash = (hash * 31 + categoria.charCodeAt(i)) >>> 0;
   return CATEGORIA_BADGE_PALETTE[hash % CATEGORIA_BADGE_PALETTE.length];

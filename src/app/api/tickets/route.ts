@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findAllTickets } from '@/data/TicketRepository';
+import { findCategoriaCatalog } from '@/data/CategoriaRepository';
 import { filterTickets } from '@/domain/usecases/FilterTickets';
 import { getTicketsSummary } from '@/domain/usecases/GetTicketsSummary';
 import { getTicketsDetail } from '@/domain/usecases/GetTicketsDetail';
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     anios: parseNumberList(params, 'anios')
   };
 
-  const allTickets = await findAllTickets();
+  const [allTickets, categoriaCatalog] = await Promise.all([findAllTickets(), findCategoriaCatalog()]);
   const tickets = filterTickets(allTickets, filters);
   const ticketsConCategoriaEfectiva = tickets.map((t) => ({ ...t, categoria: getEffectiveCategoria(t.categoria, t.categoriaCorregida) }));
 
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
       ticketsByPlaza: getTicketsByPlaza(tickets),
       tiempoPromedioPorCategoria: getTiempoPromedioPorCategoria(ticketsConCategoriaEfectiva),
       ticketsPorMes: getTicketsPorMes(tickets),
-      categoriaOptions: getDistinctCategorias(allTickets)
+      categoriaOptions: getDistinctCategorias(allTickets, categoriaCatalog)
     }
   });
 }
