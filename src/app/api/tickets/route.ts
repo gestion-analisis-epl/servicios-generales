@@ -9,6 +9,7 @@ import { getTicketsByEstatus } from '@/domain/usecases/GetTicketsByEstatus';
 import { getTicketsByPlaza } from '@/domain/usecases/GetTicketsByPlaza';
 import { getTiempoPromedioPorCategoria } from '@/domain/usecases/GetTiempoPromedioPorCategoria';
 import { getTicketsPorMes } from '@/domain/usecases/GetTicketsPorMes';
+import { getTiempoPromedioPorMes } from '@/domain/usecases/GetTiempoPromedioPorMes';
 import { getTicketYears } from '@/domain/usecases/GetTicketYears';
 import { getEffectiveCategoria } from '@/domain/usecases/GetEffectiveCategoria';
 import { getDistinctCategorias } from '@/domain/usecases/GetDistinctCategorias';
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
       ticketsByPlaza: getTicketsByPlaza(tickets),
       tiempoPromedioPorCategoria: getTiempoPromedioPorCategoria(ticketsConCategoriaEfectiva),
       ticketsPorMes: getTicketsPorMes(tickets),
+      tiempoPromedioPorMes: getTiempoPromedioPorMes(tickets),
       categoriaOptions: getDistinctCategorias(allTickets, categoriaCatalog)
     }
   });

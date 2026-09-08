@@ -12,6 +12,8 @@ import type { EstatusTotal } from '@/domain/usecases/GetTicketsByEstatus';
 import type { PlazaTotal } from '@/domain/usecases/GetTicketsByPlaza';
 import type { TiempoPromedioCategoria } from '@/domain/usecases/GetTiempoPromedioPorCategoria';
 import type { MesTotal } from '@/domain/usecases/GetTicketsPorMes';
+import type { TiempoPromedioMes } from '@/domain/usecases/GetTiempoPromedioPorMes';
+import { formatDuration } from '@/domain/usecases/FormatDuration';
 
 interface TicketsData {
   ticketsSummary: TicketsSummary;
@@ -21,6 +23,7 @@ interface TicketsData {
   ticketsByPlaza: PlazaTotal[];
   tiempoPromedioPorCategoria: TiempoPromedioCategoria[];
   ticketsPorMes: MesTotal[];
+  tiempoPromedioPorMes: TiempoPromedioMes[];
   categoriaOptions: string[];
 }
 
@@ -126,11 +129,46 @@ export default function TicketsPage() {
       {data && (
         <>
           <CardsRow>
-            <Card accent="primary" icon={<IconTicket />} label="Tickets Totales" value={data.ticketsSummary.totalTickets} onClick={() => setTicketsDialog({ title: 'Tickets Totales', estatus: null })} />
-            <Card accent="warning" icon={<IconClock />} label="En Seguimiento" value={data.ticketsSummary.totalEnSeguimiento} onClick={() => setTicketsDialog({ title: 'Tickets en Seguimiento', estatus: 'EN SEGUIMIENTO' })} />
-            <Card accent="success" icon={<IconCheck />} label="Finalizados" value={data.ticketsSummary.totalFinalizados} onClick={() => setTicketsDialog({ title: 'Tickets Finalizados', estatus: 'FINALIZADO' })} />
-            <Card accent="primary" icon={<IconCalendar />} label="Tiempo Prom. Finalizar" value={data.ticketsSummary.tiempoPromedioFinalizar || '-'} />
-            <Card accent="primary" icon={<IconCalendar />} label="Tiempo Prom. Reconocer" value={data.ticketsSummary.tiempoPromedioReconocer || '-'} />
+            <Card
+              accent="primary"
+              icon={<IconTicket />}
+              label="Tickets Totales"
+              value={data.ticketsSummary.totalTickets}
+              onClick={() => setTicketsDialog({ title: 'Tickets Totales', estatus: null })}
+              chart={<MiniMonthlyBarChart rows={data.ticketsPorMes} field="total" />}
+            />
+            <Card
+              accent="warning"
+              icon={<IconClock />}
+              label="En Seguimiento"
+              value={data.ticketsSummary.totalEnSeguimiento}
+              onClick={() => setTicketsDialog({ title: 'Tickets en Seguimiento', estatus: 'EN SEGUIMIENTO' })}
+              subtitle={formatPct(data.ticketsSummary.totalEnSeguimiento, data.ticketsSummary.totalTickets)}
+              chart={<MiniMonthlyBarChart rows={data.ticketsPorMes} field="enSeguimiento" barClassName="bg-amber-500/25" heightClassName="h-6" />}
+            />
+            <Card
+              accent="success"
+              icon={<IconCheck />}
+              label="Finalizados"
+              value={data.ticketsSummary.totalFinalizados}
+              onClick={() => setTicketsDialog({ title: 'Tickets Finalizados', estatus: 'FINALIZADO' })}
+              subtitle={formatPct(data.ticketsSummary.totalFinalizados, data.ticketsSummary.totalTickets)}
+              chart={<MiniMonthlyBarChart rows={data.ticketsPorMes} field="finalizados" barClassName="bg-emerald-500/25" heightClassName="h-6" />}
+            />
+            <Card
+              accent="primary"
+              icon={<IconCalendar />}
+              label="Tiempo Prom. Finalizar"
+              value={data.ticketsSummary.tiempoPromedioFinalizar || '-'}
+              chart={<MiniSparkline rows={data.tiempoPromedioPorMes} field="segundosFinalizar" />}
+            />
+            <Card
+              accent="primary"
+              icon={<IconCalendar />}
+              label="Tiempo Prom. Reconocer"
+              value={data.ticketsSummary.tiempoPromedioReconocer || '-'}
+              chart={<MiniSparkline rows={data.tiempoPromedioPorMes} field="segundosReconocer" />}
+            />
           </CardsRow>
 
           <div className="flex gap-4 flex-wrap mb-6">
@@ -195,17 +233,106 @@ const ACCENT_CLASSES: Record<string, string> = {
   danger: 'bg-rose-500'
 };
 
-function Card({ accent, icon, label, value, onClick }: { accent: keyof typeof ACCENT_CLASSES; icon: React.ReactNode; label: string; value: string | number; onClick?: () => void }) {
+function Card({ accent, icon, label, value, onClick, chart, subtitle }: { accent: keyof typeof ACCENT_CLASSES; icon: React.ReactNode; label: string; value: string | number; onClick?: () => void; chart?: React.ReactNode; subtitle?: string }) {
   const Tag = onClick ? 'button' : 'div';
   return (
     <Tag
       onClick={onClick}
-      className={`bg-white rounded-[10px] shadow-sm px-5 py-4.5 flex-1 min-w-[180px] text-left ${onClick ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
+      className={`bg-white rounded-[10px] shadow-sm px-5 py-4.5 flex-1 min-w-[180px] text-left flex flex-col ${onClick ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
     >
       <div className={`w-10 h-10 rounded-lg mb-3 flex items-center justify-center text-white ${ACCENT_CLASSES[accent]}`}>{icon}</div>
       <h3 className="text-xs uppercase text-slate-400 tracking-wide mb-1.5">{label}</h3>
       <p className="text-[22px] font-bold">{value}</p>
+      {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+      {chart && <div className="mt-auto pt-2 -mx-1">{chart}</div>}
     </Tag>
+  );
+}
+
+const SPARKLINE_WIDTH = 300;
+const SPARKLINE_HEIGHT = 34;
+const SPARKLINE_PAD_X = 2;
+const SPARKLINE_PAD_Y = 3;
+
+function MiniSparkline({ rows, field }: { rows: TiempoPromedioMes[]; field: 'segundosFinalizar' | 'segundosReconocer' }) {
+  const points = rows.map((r) => r[field]);
+  const activeIndexes = points.map((v, i) => (v > 0 ? i : -1)).filter((i) => i >= 0);
+
+  if (activeIndexes.length === 0) return null;
+
+  const max = Math.max(...activeIndexes.map((i) => points[i]));
+  const min = Math.min(...activeIndexes.map((i) => points[i]));
+  const range = max - min || 1;
+  const stepX = (SPARKLINE_WIDTH - SPARKLINE_PAD_X * 2) / Math.max(points.length - 1, 1);
+
+  const coords = points.map((v, i) => {
+    const x = SPARKLINE_PAD_X + i * stepX;
+    const y = v > 0
+      ? SPARKLINE_HEIGHT - SPARKLINE_PAD_Y - ((v - min) / range) * (SPARKLINE_HEIGHT - SPARKLINE_PAD_Y * 2)
+      : null;
+    return { x, y, v, mes: rows[i].mes };
+  });
+
+  const activeCoords = coords.filter((c) => c.y !== null) as { x: number; y: number; v: number; mes: string }[];
+  const gradientId = `sparkline-fill-${field}`;
+  const linePath = activeCoords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+  const areaPath = activeCoords.length
+    ? `${linePath} L${activeCoords[activeCoords.length - 1].x.toFixed(1)},${SPARKLINE_HEIGHT} L${activeCoords[0].x.toFixed(1)},${SPARKLINE_HEIGHT} Z`
+    : '';
+
+  return (
+    <svg viewBox={`0 0 ${SPARKLINE_WIDTH} ${SPARKLINE_HEIGHT}`} preserveAspectRatio="none" className="w-full h-7 mt-2 overflow-visible">
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" />
+      <path d={linePath} fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      {activeCoords.map((c) => (
+        <circle key={c.mes} cx={c.x} cy={c.y} r={2} fill="#6366f1">
+          <title>{`${c.mes}: ${formatDuration(c.v) || '-'}`}</title>
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+function formatPct(part: number, total: number): string {
+  if (!total) return '0% del total';
+  return `${((part / total) * 100).toFixed(1)}% del total`;
+}
+
+function MiniMonthlyBarChart({
+  rows,
+  field,
+  barClassName = 'bg-indigo-500/20',
+  heightClassName = 'h-10'
+}: {
+  rows: MesTotal[];
+  field: 'total' | 'finalizados' | 'enSeguimiento';
+  barClassName?: string;
+  heightClassName?: string;
+}) {
+  const max = Math.max(1, ...rows.map((r) => r[field]));
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div className={`flex items-end gap-[3px] px-1 ${heightClassName}`}>
+      {rows.map((r) => {
+        const heightPct = Math.max((r[field] / max) * 100, 8);
+        return (
+          <div
+            key={r.mes}
+            title={`${r.mes}: ${r[field]} ticket(s)`}
+            className={`flex-1 rounded-sm ${barClassName}`}
+            style={{ height: `${heightPct}%` }}
+          />
+        );
+      })}
+    </div>
   );
 }
 
