@@ -11,6 +11,7 @@ import { getTiempoPromedioPorCategoria } from '@/domain/usecases/GetTiempoPromed
 import { getTicketsPorMes } from '@/domain/usecases/GetTicketsPorMes';
 import { getTiempoPromedioPorMes } from '@/domain/usecases/GetTiempoPromedioPorMes';
 import { getTicketYears } from '@/domain/usecases/GetTicketYears';
+import { getTicketPlazas } from '@/domain/usecases/GetTicketPlazas';
 import { getEffectiveCategoria } from '@/domain/usecases/GetEffectiveCategoria';
 import { getDistinctCategorias } from '@/domain/usecases/GetDistinctCategorias';
 
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
     fechaFin: params.get('fechaFin') || undefined,
     meses: parseNumberList(params, 'meses'),
     trimestres: parseNumberList(params, 'trimestres'),
-    anios: parseNumberList(params, 'anios')
+    anios: parseNumberList(params, 'anios'),
+    plazas: parseStringList(params, 'plazas')
   };
 
   const [allTickets, categoriaCatalog] = await Promise.all([findAllTickets(), findCategoriaCatalog()]);
@@ -30,7 +32,8 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     filterOptions: {
-      anios: getTicketYears(allTickets)
+      anios: getTicketYears(allTickets),
+      plazas: getTicketPlazas(allTickets)
     },
     data: {
       ticketsSummary: getTicketsSummary(tickets),
@@ -49,4 +52,9 @@ export async function GET(request: NextRequest) {
 function parseNumberList(params: URLSearchParams, key: string): number[] | undefined {
   if (!params.has(key)) return undefined;
   return (params.get(key) || '').split(',').map(Number).filter((n) => !isNaN(n));
+}
+
+function parseStringList(params: URLSearchParams, key: string): string[] | undefined {
+  if (!params.has(key)) return undefined;
+  return (params.get(key) || '').split(',').filter((s) => s.length > 0);
 }

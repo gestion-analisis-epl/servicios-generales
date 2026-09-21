@@ -29,6 +29,7 @@ interface TicketsData {
 
 interface FilterOptions {
   anios: number[];
+  plazas: string[];
 }
 
 interface Filters {
@@ -37,9 +38,10 @@ interface Filters {
   meses?: string[];
   trimestres?: string[];
   anios?: string[];
+  plazas?: string[];
 }
 
-const EMPTY_FILTERS: Filters = { fechaInicio: '', fechaFin: '', meses: undefined, trimestres: undefined, anios: undefined };
+const EMPTY_FILTERS: Filters = { fechaInicio: '', fechaFin: '', meses: undefined, trimestres: undefined, anios: undefined, plazas: undefined };
 
 const MES_OPTIONS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -48,7 +50,7 @@ const MES_OPTIONS = [
 const TRIMESTRE_OPTIONS = ['Trimestre 1', 'Trimestre 2', 'Trimestre 3', 'Trimestre 4'];
 
 export default function TicketsPage() {
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ anios: [] });
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ anios: [], plazas: [] });
   const [data, setData] = useState<TicketsData | null>(null);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [loading, setLoading] = useState(true);
@@ -69,6 +71,7 @@ export default function TicketsPage() {
       if (filters.meses !== undefined) params.set('meses', filters.meses.map((m) => MES_OPTIONS.indexOf(m) + 1).join(','));
       if (filters.trimestres !== undefined) params.set('trimestres', filters.trimestres.map((t) => TRIMESTRE_OPTIONS.indexOf(t) + 1).join(','));
       if (filters.anios !== undefined) params.set('anios', filters.anios.join(','));
+      if (filters.plazas !== undefined) params.set('plazas', filters.plazas.join(','));
 
       try {
         const result = await fetchJsonCached<{ filterOptions: FilterOptions; data: TicketsData }>(`/api/tickets?${params.toString()}`, 60_000);
@@ -123,6 +126,7 @@ export default function TicketsPage() {
         <MultiSelectFilter label="Mes" options={MES_OPTIONS} value={filters.meses ?? MES_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, meses: v }))} />
         <MultiSelectFilter label="Trimestre" options={TRIMESTRE_OPTIONS} value={filters.trimestres ?? TRIMESTRE_OPTIONS} onChange={(v) => setFilters((f) => ({ ...f, trimestres: v }))} />
         <MultiSelectFilter label="Año" options={filterOptions.anios.map(String)} value={filters.anios ?? filterOptions.anios.map(String)} onChange={(v) => setFilters((f) => ({ ...f, anios: v }))} />
+        <MultiSelectFilter label="Ciudad" options={filterOptions.plazas} value={filters.plazas ?? filterOptions.plazas} onChange={(v) => setFilters((f) => ({ ...f, plazas: v }))} />
         <button onClick={() => setFilters(EMPTY_FILTERS)} className="rounded-md px-4 py-1.5 text-sm bg-white border border-slate-200">Limpiar filtros</button>
       </div>
 

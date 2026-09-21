@@ -6,11 +6,12 @@ export interface TicketFilters {
   meses?: number[];
   trimestres?: number[];
   anios?: number[];
+  plazas?: string[];
 }
 
 export function filterTickets(tickets: Ticket[], filters: TicketFilters): Ticket[] {
   const hasAnyFilter =
-    filters.fechaInicio || filters.fechaFin || filters.meses !== undefined || filters.trimestres !== undefined || filters.anios !== undefined;
+    filters.fechaInicio || filters.fechaFin || filters.meses !== undefined || filters.trimestres !== undefined || filters.anios !== undefined || filters.plazas !== undefined;
   if (!hasAnyFilter) return tickets;
 
   const start = filters.fechaInicio ? new Date(filters.fechaInicio) : null;
@@ -30,6 +31,7 @@ export function filterTickets(tickets: Ticket[], filters: TicketFilters): Ticket
       if (!filters.trimestres.includes(trimestre)) return false;
     }
     if (filters.anios !== undefined && !filters.anios.includes(date.getFullYear())) return false;
+    if (filters.plazas !== undefined && !filters.plazas.includes(t.plaza || 'SIN PLAZA')) return false;
 
     return true;
   });
