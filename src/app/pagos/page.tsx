@@ -7,6 +7,7 @@ import type { PagosSummary } from '@/domain/usecases/GetPagosSummary';
 import type { PagoDetailRow } from '@/domain/usecases/GetPagosDetail';
 import type { PagoPorFechaRow, PagoPorFechaOffice } from '@/domain/usecases/GetPagosPorFechaLimite';
 import type { OficinasPorFechaPivot } from '@/domain/usecases/GetOficinasVigentesPorFecha';
+import { Card, ErrorAlert, LoadingBanner, PageHeader, Panel, ShareBar, formatShare } from '@/components/ui';
 
 interface FilterOptions {
   ciudades: string[];
@@ -79,20 +80,10 @@ export default function PagosPage() {
 
   return (
     <div className="p-6">
-      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center px-6 border-b border-slate-200 bg-white">
-        <h1 className="text-lg font-bold">Pagos</h1>
-      </header>
+      <PageHeader title="Pagos" />
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-rose-400 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600">
-          Error: {error}
-        </div>
-      )}
-      {loading && (
-        <div className="mb-4 rounded-lg border border-indigo-400 bg-indigo-50 px-3.5 py-2.5 text-sm text-indigo-600">
-          Cargando…
-        </div>
-      )}
+      {error && <ErrorAlert message={error} />}
+      {loading && <LoadingBanner />}
 
       <div className="flex items-end gap-4 flex-wrap bg-white rounded-lg shadow-sm px-4.5 py-3.5 mb-5">
         <MultiSelectFilter label="Ciudad" options={filterOptions.ciudades} value={filters.ciudades ?? filterOptions.ciudades} onChange={(v) => setFilters((f) => ({ ...f, ciudades: v }))} />
@@ -103,10 +94,10 @@ export default function PagosPage() {
 
       {pagosSummary && (
         <div className="flex gap-4 flex-wrap mb-6">
-          <Card accent="primary" icon={<IconMoney />} label="Total Mensual" value={formatMoney(pagosSummary.totalMensual)} />
-          <Card accent="primary" icon={<IconBuilding />} label="Arrendamientos Totales" value={pagosSummary.totalArrendamientos} />
-          <Card accent="warning" icon={<IconAlertClock />} label="Por Vencer" value={pagosSummary.porVencer} />
-          <Card accent="danger" icon={<IconWarning />} label="Vencidos" value={pagosSummary.vencidos} />
+          <Card accent="primary" icon={<IconMoney />} label="Total Mensual" value={formatMoney(pagosSummary.totalMensual)} subtitle="Oficinas no vencidas" />
+          <Card accent="primary" icon={<IconBuilding />} label="Arrendamientos Totales" value={pagosSummary.totalArrendamientos} subtitle="Portafolio completo" chart={<ShareBar part={1} total={1} accent="primary" />} />
+          <Card accent="warning" icon={<IconAlertClock />} label="Por Vencer" value={pagosSummary.porVencer} subtitle={formatShare(pagosSummary.porVencer, pagosSummary.totalArrendamientos)} chart={<ShareBar part={pagosSummary.porVencer} total={pagosSummary.totalArrendamientos} accent="warning" />} />
+          <Card accent="danger" icon={<IconWarning />} label="Vencidos" value={pagosSummary.vencidos} subtitle={formatShare(pagosSummary.vencidos, pagosSummary.totalArrendamientos)} chart={<ShareBar part={pagosSummary.vencidos} total={pagosSummary.totalArrendamientos} accent="danger" />} />
         </div>
       )}
 
@@ -130,23 +121,6 @@ export default function PagosPage() {
   );
 }
 
-const ACCENT_CLASSES: Record<string, string> = {
-  primary: 'bg-indigo-500',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-rose-500'
-};
-
-function Card({ accent, icon, label, value }: { accent: keyof typeof ACCENT_CLASSES; icon: React.ReactNode; label: string; value: string | number }) {
-  return (
-    <div className="bg-white rounded-[10px] shadow-sm px-5 py-4.5 flex-1 min-w-[180px]">
-      <div className={`w-10 h-10 rounded-lg mb-3 flex items-center justify-center text-white ${ACCENT_CLASSES[accent]}`}>{icon}</div>
-      <h3 className="text-xs uppercase text-slate-400 tracking-wide mb-1.5">{label}</h3>
-      <p className="text-[22px] font-bold">{value}</p>
-    </div>
-  );
-}
-
 function icon(path: React.ReactNode) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
@@ -166,21 +140,12 @@ function formatMoney(value: number): string {
   return value.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 }
 
-function Panel({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`bg-white rounded-[10px] shadow-sm p-5 flex-1 min-w-[380px] flex flex-col ${className}`}>
-      <h2 className="text-sm font-semibold mb-4">{title}</h2>
-      <div className="flex-1">{children}</div>
-    </div>
-  );
-}
-
 function PaymentsByDateChart({ rows, onSelect }: { rows: PagoPorFechaRow[]; onSelect: (row: PagoPorFechaRow) => void }) {
   const max = Math.max(0, ...rows.map((r) => r.totalFactura));
   const totalGeneral = rows.reduce((sum, r) => sum + r.totalFactura, 0);
 
   return (
-    <Panel title="Total por Fecha Límite de Pago">
+    <Panel minWidth={380} title="Total por Fecha Límite de Pago">
       {rows.length === 0 ? (
         <p className="text-sm text-slate-400">Sin datos para mostrar.</p>
       ) : (
@@ -295,9 +260,9 @@ function PagoFechaDialog({ row, onClose }: { row: PagoPorFechaRow; onClose: () =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-white rounded-[10px] shadow-lg w-full max-w-[95vw] xl:max-w-[900px] h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900/55 backdrop-blur-[2px] dialog-overlay p-4" onClick={onClose}>
+      <div className="bg-white rounded-[10px] shadow-2xl border border-slate-200 dialog-panel w-full max-w-[95vw] xl:max-w-[900px] h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 rounded-t-[10px] gap-4">
           <h2 className="text-sm font-semibold whitespace-nowrap">
             Pagos con vencimiento {row.fecha} <span className="text-slate-400 font-normal">({sorted.length}{sorted.length !== rows.length ? ` de ${rows.length}` : ''})</span>
           </h2>
@@ -403,7 +368,7 @@ function PaymentsVencimientoHeatmap({ rows }: { rows: PagoPorFechaRow[] }) {
   });
 
   return (
-    <Panel title="Días Restantes Totales por Próxima Fecha de Pago">
+    <Panel minWidth={380} title="Días Restantes Totales por Próxima Fecha de Pago">
       {sorted.length === 0 ? (
         <p className="text-sm text-slate-400">Sin datos para mostrar.</p>
       ) : (
@@ -449,7 +414,7 @@ function OficinasPorFechaTable({ pivot }: { pivot: OficinasPorFechaPivot }) {
   const max = Math.max(grandTotal, ...totalsValues, 1);
 
   return (
-    <Panel title="Total de Oficinas Vigentes según Próxima Fecha de Pago" className="mt-6">
+    <Panel minWidth={380} title="Total de Oficinas Vigentes según Próxima Fecha de Pago" className="mt-6">
       {rows.length === 0 ? (
         <p className="text-sm text-slate-400">Sin datos para mostrar.</p>
       ) : (
@@ -662,9 +627,9 @@ function PaymentsDayDialog({ dateKey, rows, onClose }: { dateKey: string; rows: 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-white rounded-[10px] shadow-lg w-full max-w-5xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900/55 backdrop-blur-[2px] dialog-overlay p-4" onClick={onClose}>
+      <div className="bg-white rounded-[10px] shadow-2xl border border-slate-200 dialog-panel w-full max-w-5xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 rounded-t-[10px]">
           <h2 className="text-sm font-semibold">Pagos del {formatDialogDate(dateKey)} <span className="text-slate-400 font-normal">({rows.length})</span></h2>
           <button onClick={onClose} className="text-slate-400 hover:text-indigo-600 p-1" title="Cerrar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">

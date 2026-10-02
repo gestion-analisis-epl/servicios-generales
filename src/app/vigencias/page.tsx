@@ -5,6 +5,7 @@ import { MultiSelectFilter } from '@/components/MultiSelectFilter';
 import { fetchJsonCached } from '@/lib/fetchCache';
 import type { VigenciasSummary } from '@/domain/usecases/GetVigenciasSummary';
 import type { VigenciaGanttRow } from '@/domain/usecases/GetVigenciasGantt';
+import { Card, ErrorAlert, LoadingBanner, PageHeader, ShareBar, formatShare } from '@/components/ui';
 
 interface FilterOptions {
   ciudades: string[];
@@ -60,22 +61,14 @@ export default function VigenciasPage() {
     return () => { cancelled = true; };
   }, [filters]);
 
+  const vigenciasTotal = summary ? summary.vigentes + summary.proximos + summary.criticos + summary.indeterminados : 0;
+
   return (
     <div className="p-6">
-      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center px-6 border-b border-slate-200 bg-white">
-        <h1 className="text-lg font-bold">Vigencias</h1>
-      </header>
+      <PageHeader title="Vigencias" />
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-rose-400 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600">
-          Error: {error}
-        </div>
-      )}
-      {loading && (
-        <div className="mb-4 rounded-lg border border-indigo-400 bg-indigo-50 px-3.5 py-2.5 text-sm text-indigo-600">
-          Cargando…
-        </div>
-      )}
+      {error && <ErrorAlert message={error} />}
+      {loading && <LoadingBanner />}
 
       <div className="flex items-end gap-4 flex-wrap bg-white rounded-lg shadow-sm px-4.5 py-3.5 mb-5">
         <MultiSelectFilter label="Ciudad" options={filterOptions.ciudades} value={filters.ciudades ?? filterOptions.ciudades} onChange={(v) => setFilters((f) => ({ ...f, ciudades: v }))} />
@@ -86,32 +79,14 @@ export default function VigenciasPage() {
 
       {summary && (
         <div className="flex gap-4 flex-wrap mb-6">
-          <Card accent="success" icon={<IconCheck />} label="Vigentes" value={summary.vigentes} />
-          <Card accent="warning" icon={<IconClock />} label="Próximos" value={summary.proximos} />
-          <Card accent="danger" icon={<IconAlertClock />} label="Urgentes" value={summary.criticos} />
-          <Card accent="neutral" icon={<IconWarning />} label="Indeterminado" value={summary.indeterminados} />
+          <Card accent="success" icon={<IconCheck />} label="Vigentes" value={summary.vigentes} subtitle={formatShare(summary.vigentes, vigenciasTotal)} chart={<ShareBar part={summary.vigentes} total={vigenciasTotal} accent="success" />} />
+          <Card accent="warning" icon={<IconClock />} label="Próximos" value={summary.proximos} subtitle={formatShare(summary.proximos, vigenciasTotal)} chart={<ShareBar part={summary.proximos} total={vigenciasTotal} accent="warning" />} />
+          <Card accent="danger" icon={<IconAlertClock />} label="Urgentes" value={summary.criticos} subtitle={formatShare(summary.criticos, vigenciasTotal)} chart={<ShareBar part={summary.criticos} total={vigenciasTotal} accent="danger" />} />
+          <Card accent="orange" icon={<IconWarning />} label="Indeterminado" value={summary.indeterminados} subtitle={formatShare(summary.indeterminados, vigenciasTotal)} chart={<ShareBar part={summary.indeterminados} total={vigenciasTotal} accent="orange" />} />
         </div>
       )}
 
       <VigenciasGantt rows={gantt} />
-    </div>
-  );
-}
-
-const ACCENT_CLASSES: Record<string, string> = {
-  primary: 'bg-indigo-500',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-rose-500',
-  neutral: 'bg-orange-500'
-};
-
-function Card({ accent, icon, label, value }: { accent: keyof typeof ACCENT_CLASSES; icon: React.ReactNode; label: string; value: string | number }) {
-  return (
-    <div className="bg-white rounded-[10px] shadow-sm px-5 py-4.5 flex-1 min-w-[180px]">
-      <div className={`w-10 h-10 rounded-lg mb-3 flex items-center justify-center text-white ${ACCENT_CLASSES[accent]}`}>{icon}</div>
-      <h3 className="text-xs uppercase text-slate-400 tracking-wide mb-1.5">{label}</h3>
-      <p className="text-[22px] font-bold">{value}</p>
     </div>
   );
 }

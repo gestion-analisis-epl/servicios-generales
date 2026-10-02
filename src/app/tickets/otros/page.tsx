@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { fetchJsonCached, invalidateCachedUrl } from '@/lib/fetchCache';
 import { Badge, categoriaBadgeClass } from '@/components/TicketDialogs';
 import type { TicketDetailRow } from '@/domain/usecases/GetTicketsDetail';
+import { ErrorAlert, LoadingBanner, PageHeader } from '@/components/ui';
 
 interface TicketsApiData {
   ticketsDetail: TicketDetailRow[];
@@ -84,23 +85,10 @@ export default function TicketsOtrosPage() {
 
   return (
     <div className="p-6">
-      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center justify-between px-6 border-b border-slate-200 bg-white">
-        <div>
-          <Link href="/tickets" className="text-xs text-indigo-600 hover:underline">← Volver a Tickets</Link>
-          <h1 className="text-lg font-bold">Corregir categoría OTRO</h1>
-        </div>
-      </header>
+      <PageHeader title="Corregir categoría OTRO" eyebrow={<Link href="/tickets" className="text-xs text-indigo-600 hover:underline">← Volver a Tickets</Link>} />
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-rose-400 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600">
-          Error: {error}
-        </div>
-      )}
-      {loading && (
-        <div className="mb-4 rounded-lg border border-indigo-400 bg-indigo-50 px-3.5 py-2.5 text-sm text-indigo-600">
-          Cargando…
-        </div>
-      )}
+      {error && <ErrorAlert message={error} />}
+      {loading && <LoadingBanner />}
 
       {!loading && tickets.length === 0 && !error && (
         <div className="bg-white rounded-[10px] shadow-sm p-8 text-center text-slate-400">

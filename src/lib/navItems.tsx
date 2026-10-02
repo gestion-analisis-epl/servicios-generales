@@ -20,7 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: '/pagos',
-    label: 'Pagos',
+    label: 'Pagos de arrendamientos',
     icon: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
     keywords: ['calendario', 'factura', 'vencimiento', 'fecha límite', 'total mensual']
   },

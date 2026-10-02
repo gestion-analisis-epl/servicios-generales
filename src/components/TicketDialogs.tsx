@@ -137,12 +137,12 @@ export function TicketsDialog({ title, rows, onClose, onRowClick }: { title: str
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900/55 backdrop-blur-[2px] dialog-overlay p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-[10px] shadow-lg w-full max-w-[95vw] xl:max-w-[1400px] h-[90vh] flex flex-col"
+        className="bg-white rounded-[10px] shadow-2xl border border-slate-200 dialog-panel w-full max-w-[95vw] xl:max-w-[1400px] h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 gap-4">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 rounded-t-[10px] gap-4">
           <h2 className="text-sm font-semibold whitespace-nowrap">{title} <span className="text-slate-400 font-normal">({sorted.length}{sorted.length !== rows.length ? ` de ${rows.length}` : ''})</span></h2>
           <input
             type="text"
@@ -243,9 +243,9 @@ const TICKET_DETAIL_FIELDS: { key: keyof TicketDetailRow; label: string }[] = [
 
 export function TicketDetailDialog({ row, onClose }: { row: TicketDetailRow; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-white rounded-[10px] shadow-lg w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-indigo-900/55 backdrop-blur-[2px] dialog-overlay p-4" onClick={onClose}>
+      <div className="bg-white rounded-[10px] shadow-2xl border border-slate-200 dialog-panel w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 rounded-t-[10px]">
           <h2 className="text-sm font-semibold">Ticket {row.folio}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-indigo-600 p-1" title="Cerrar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">

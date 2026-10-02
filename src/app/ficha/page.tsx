@@ -6,6 +6,7 @@ import { TicketsDialog, TicketDetailDialog } from '@/components/TicketDialogs';
 import type { Office } from '@/domain/entities/Office';
 import type { TicketDetailRow } from '@/domain/usecases/GetTicketsDetail';
 import type { CategoriaTotal } from '@/domain/usecases/GetTicketsByCategoria';
+import { Card, ErrorAlert, LoadingBanner, PageHeader, Panel } from '@/components/ui';
 
 interface FichaData {
   offices: Office[];
@@ -42,20 +43,10 @@ export default function FichaPage() {
 
   return (
     <div className="p-6">
-      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center px-6 border-b border-slate-200 bg-white">
-        <h1 className="text-lg font-bold">Ficha de Oficina</h1>
-      </header>
+      <PageHeader title="Ficha de Oficina" />
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-rose-400 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600">
-          Error: {error}
-        </div>
-      )}
-      {loading && (
-        <div className="mb-4 rounded-lg border border-indigo-400 bg-indigo-50 px-3.5 py-2.5 text-sm text-indigo-600">
-          Cargando…
-        </div>
-      )}
+      {error && <ErrorAlert message={error} />}
+      {loading && <LoadingBanner />}
 
       <div className="bg-white rounded-lg shadow-sm px-4.5 py-3.5 mb-5 max-w-md">
         <label className="text-[11px] uppercase text-slate-400 tracking-wide block mb-1">Buscar por Código de Oficina</label>
@@ -151,15 +142,6 @@ function Badge({ text, className }: { text: string; className: string }) {
   return <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${className}`}>{text}</span>;
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white rounded-[10px] shadow-sm p-5 flex-1 min-w-[300px]">
-      <h2 className="text-sm font-semibold mb-4">{title}</h2>
-      {children}
-    </div>
-  );
-}
-
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
@@ -200,7 +182,7 @@ function OfficeFicha({ office, tickets, categorias }: {
       </div>
 
       <div className="flex gap-4 flex-wrap mb-4">
-        <Panel title="Ubicación">
+        <Panel minWidth={300} title="Ubicación">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ciudad" value={office.ciudad} />
             <Field label="Tipo de Oficina" value={office.tipoOficina} />
@@ -211,7 +193,7 @@ function OfficeFicha({ office, tickets, categorias }: {
           </div>
         </Panel>
 
-        <Panel title="Vigencia">
+        <Panel minWidth={300} title="Vigencia">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Inicio Vigencia" value={formatDate(office.inicioVigencia)} />
             <Field label="Fin Vigencia" value={formatDate(office.finVigencia)} />
@@ -224,7 +206,7 @@ function OfficeFicha({ office, tickets, categorias }: {
       </div>
 
       <div className="flex gap-4 flex-wrap mb-4">
-        <Panel title="Mapa">
+        <Panel minWidth={300} title="Mapa">
           {office.domicilio ? (
             <iframe
               title={`Mapa — ${office.codigo}`}
@@ -240,7 +222,7 @@ function OfficeFicha({ office, tickets, categorias }: {
       </div>
 
       <div className="flex gap-4 flex-wrap mb-4">
-        <Panel title="Pagos">
+        <Panel minWidth={300} title="Pagos">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Monto Renta" value={formatMoney(office.montoRenta)} />
             <Field label="Total Mensual" value={formatMoney(office.totalMensual)} />
@@ -251,7 +233,7 @@ function OfficeFicha({ office, tickets, categorias }: {
           </div>
         </Panel>
 
-        <Panel title="Observaciones">
+        <Panel minWidth={300} title="Observaciones">
           <p className="text-sm text-slate-700 whitespace-pre-wrap">{office.observaciones || 'Sin observaciones.'}</p>
         </Panel>
       </div>
@@ -261,16 +243,20 @@ function OfficeFicha({ office, tickets, categorias }: {
         <p className="text-sm text-slate-400">Sin tickets asociados a esta oficina.</p>
       ) : (
         <div className="flex gap-4 flex-wrap">
-          <TicketCard
+          <Card
+            compact
+            icon={<IconTicket />}
             accent="primary"
             label="Total"
             value={tickets.length}
             onClick={() => setTicketsDialog({ title: `Tickets — ${office.codigo} — Total`, categoria: null })}
           />
           {categorias.map((c) => (
-            <TicketCard
+            <Card
+              compact
+              icon={<IconTicket />}
               key={c.categoria}
-              accent="neutral"
+              accent="muted"
               label={c.categoria}
               value={c.total}
               onClick={() => setTicketsDialog({ title: `Tickets — ${office.codigo} — ${c.categoria}`, categoria: c.categoria })}
@@ -295,25 +281,11 @@ function OfficeFicha({ office, tickets, categorias }: {
   );
 }
 
-const TICKET_CARD_ACCENT_CLASSES: Record<string, string> = {
-  primary: 'bg-indigo-500',
-  neutral: 'bg-slate-400'
-};
-
-function TicketCard({ accent, label, value, onClick }: { accent: keyof typeof TICKET_CARD_ACCENT_CLASSES; label: string; value: number; onClick: () => void }) {
+function IconTicket() {
   return (
-    <button
-      onClick={onClick}
-      className="bg-white rounded-[10px] shadow-sm px-5 py-4.5 flex-1 min-w-[160px] text-left cursor-pointer transition-shadow hover:shadow-md"
-    >
-      <div className={`w-8 h-8 rounded-lg mb-3 flex items-center justify-center text-white ${TICKET_CARD_ACCENT_CLASSES[accent]}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-      </div>
-      <h3 className="text-xs uppercase text-slate-400 tracking-wide mb-1.5 truncate">{label}</h3>
-      <p className="text-[18px] font-bold">{value}</p>
-    </button>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
   );
 }
 

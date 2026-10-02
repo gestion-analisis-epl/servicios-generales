@@ -47,9 +47,9 @@ export function Navbar() {
   }
 
   return (
-    <div className="h-14 shrink-0 border-b border-slate-200 bg-white flex items-center px-6 sticky top-0 z-30">
+    <div className="h-14 shrink-0 bg-indigo-900 flex items-center px-6 sticky top-0 z-30">
       <div className="relative w-full max-w-md" ref={containerRef}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-300">
           <circle cx="11" cy="11" r="7" />
           <path d="m21 21-4.35-4.35" />
         </svg>
@@ -60,7 +60,7 @@ export function Navbar() {
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder="Buscar sección o página…"
-          className="w-full border border-slate-200 rounded-md pl-9 pr-3 py-1.5 text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+          className="w-full border border-white/10 rounded-md pl-9 pr-3 py-1.5 text-sm bg-white/10 text-white placeholder:text-indigo-300 focus:bg-white focus:text-slate-800 focus:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#d1dbc4]"
         />
 
         {open && (

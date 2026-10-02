@@ -14,6 +14,7 @@ import type { TiempoPromedioCategoria } from '@/domain/usecases/GetTiempoPromedi
 import type { MesTotal } from '@/domain/usecases/GetTicketsPorMes';
 import type { TiempoPromedioMes } from '@/domain/usecases/GetTiempoPromedioPorMes';
 import { formatDuration } from '@/domain/usecases/FormatDuration';
+import { Card, CardsRow, ErrorAlert, LoadingBanner, PageHeader, Panel, formatShare } from '@/components/ui';
 
 interface TicketsData {
   ticketsSummary: TicketsSummary;
@@ -93,26 +94,17 @@ export default function TicketsPage() {
 
   return (
     <div className="p-6">
-      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center justify-between px-6 border-b border-slate-200 bg-white">
-        <h1 className="text-lg font-bold">Tickets</h1>
+      <PageHeader title="Tickets" actions={
         <Link
           href="/tickets/otros"
           className="rounded-md px-3.5 py-1.5 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700"
         >
           Corregir categoría OTRO {totalOtro > 0 ? `(${totalOtro})` : ''}
         </Link>
-      </header>
+      } />
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-rose-400 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600">
-          Error: {error}
-        </div>
-      )}
-      {loading && (
-        <div className="mb-4 rounded-lg border border-indigo-400 bg-indigo-50 px-3.5 py-2.5 text-sm text-indigo-600">
-          Cargando…
-        </div>
-      )}
+      {error && <ErrorAlert message={error} />}
+      {loading && <LoadingBanner />}
 
       <div className="flex items-end gap-4 flex-wrap bg-white rounded-lg shadow-sm px-4.5 py-3.5 mb-5">
         <div className="flex flex-col gap-1">
@@ -147,7 +139,7 @@ export default function TicketsPage() {
               label="En Seguimiento"
               value={data.ticketsSummary.totalEnSeguimiento}
               onClick={() => setTicketsDialog({ title: 'Tickets en Seguimiento', estatus: 'EN SEGUIMIENTO' })}
-              subtitle={formatPct(data.ticketsSummary.totalEnSeguimiento, data.ticketsSummary.totalTickets)}
+              subtitle={formatShare(data.ticketsSummary.totalEnSeguimiento, data.ticketsSummary.totalTickets)}
               chart={<MiniMonthlyBarChart rows={data.ticketsPorMes} field="enSeguimiento" barClassName="bg-amber-500/25" heightClassName="h-6" />}
             />
             <Card
@@ -156,7 +148,7 @@ export default function TicketsPage() {
               label="Finalizados"
               value={data.ticketsSummary.totalFinalizados}
               onClick={() => setTicketsDialog({ title: 'Tickets Finalizados', estatus: 'FINALIZADO' })}
-              subtitle={formatPct(data.ticketsSummary.totalFinalizados, data.ticketsSummary.totalTickets)}
+              subtitle={formatShare(data.ticketsSummary.totalFinalizados, data.ticketsSummary.totalTickets)}
               chart={<MiniMonthlyBarChart rows={data.ticketsPorMes} field="finalizados" barClassName="bg-emerald-500/25" heightClassName="h-6" />}
             />
             <Card
@@ -176,28 +168,28 @@ export default function TicketsPage() {
           </CardsRow>
 
           <div className="flex gap-4 flex-wrap mb-6">
-            <Panel title="Tickets por Categoría">
+            <Panel minWidth={380} title="Tickets por Categoría">
               <CategoriaRankedBarList
                 rows={data.ticketsByCategoria}
                 onSelect={(categoria) => setTicketsDialog({ title: `Tickets - ${categoria}`, categoria })}
               />
             </Panel>
-            <Panel title="Tickets por Estatus">
+            <Panel minWidth={380} title="Tickets por Estatus">
               <EstatusDonutChart rows={data.ticketsByEstatus} />
             </Panel>
           </div>
 
           <div className="flex gap-4 flex-wrap mb-6">
-            <Panel title="Tickets por Plaza" className="min-w-full">
+            <Panel minWidth={380} title="Tickets por Plaza" className="min-w-full">
               <PlazaVerticalBarChart rows={data.ticketsByPlaza} />
             </Panel>
           </div>
 
           <div className="flex gap-4 flex-wrap mb-6">
-            <Panel title="Tiempo Promedio en Finalizar por Categoría">
+            <Panel minWidth={380} title="Tiempo Promedio en Finalizar por Categoría">
               <DurationBarList rows={data.tiempoPromedioPorCategoria} />
             </Panel>
-            <Panel title="Tickets Totales por Mes vs Finalizados">
+            <Panel minWidth={380} title="Tickets Totales por Mes vs Finalizados">
               <TicketsPorMesChart rows={data.ticketsPorMes} />
             </Panel>
           </div>
@@ -223,33 +215,6 @@ export default function TicketsPage() {
         </>
       )}
     </div>
-  );
-}
-
-function CardsRow({ children }: { children: React.ReactNode }) {
-  return <div className="flex gap-4 flex-wrap mb-6">{children}</div>;
-}
-
-const ACCENT_CLASSES: Record<string, string> = {
-  primary: 'bg-indigo-500',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-rose-500'
-};
-
-function Card({ accent, icon, label, value, onClick, chart, subtitle }: { accent: keyof typeof ACCENT_CLASSES; icon: React.ReactNode; label: string; value: string | number; onClick?: () => void; chart?: React.ReactNode; subtitle?: string }) {
-  const Tag = onClick ? 'button' : 'div';
-  return (
-    <Tag
-      onClick={onClick}
-      className={`bg-white rounded-[10px] shadow-sm px-5 py-4.5 flex-1 min-w-[180px] text-left flex flex-col ${onClick ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
-    >
-      <div className={`w-10 h-10 rounded-lg mb-3 flex items-center justify-center text-white ${ACCENT_CLASSES[accent]}`}>{icon}</div>
-      <h3 className="text-xs uppercase text-slate-400 tracking-wide mb-1.5">{label}</h3>
-      <p className="text-[22px] font-bold">{value}</p>
-      {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
-      {chart && <div className="mt-auto pt-2 -mx-1">{chart}</div>}
-    </Tag>
   );
 }
 
@@ -288,24 +253,19 @@ function MiniSparkline({ rows, field }: { rows: TiempoPromedioMes[]; field: 'seg
     <svg viewBox={`0 0 ${SPARKLINE_WIDTH} ${SPARKLINE_HEIGHT}`} preserveAspectRatio="none" className="w-full h-7 mt-2 overflow-visible">
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+          <stop offset="0%" stopColor="#2f4a5a" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#2f4a5a" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" />
-      <path d={linePath} fill="none" stroke="#6366f1" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <path d={linePath} fill="none" stroke="#2f4a5a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
       {activeCoords.map((c) => (
-        <circle key={c.mes} cx={c.x} cy={c.y} r={2} fill="#6366f1">
+        <circle key={c.mes} cx={c.x} cy={c.y} r={2} fill="#2f4a5a">
           <title>{`${c.mes}: ${formatDuration(c.v) || '-'}`}</title>
         </circle>
       ))}
     </svg>
   );
-}
-
-function formatPct(part: number, total: number): string {
-  if (!total) return '0% del total';
-  return `${((part / total) * 100).toFixed(1)}% del total`;
 }
 
 function MiniMonthlyBarChart({
@@ -353,15 +313,6 @@ const IconClock = () => icon(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l
 const IconCheck = () => icon(<path d="M20 6 9 17l-5-5" />);
 const IconCalendar = () => icon(<><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M8 2v4M16 2v4M3 10h18" /></>);
 
-function Panel({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`bg-white rounded-[10px] shadow-sm p-5 flex-1 min-w-[380px] flex flex-col ${className}`}>
-      <h2 className="text-sm font-semibold mb-4">{title}</h2>
-      <div className="flex-1">{children}</div>
-    </div>
-  );
-}
-
 function CategoriaRankedBarList({ rows, onSelect }: { rows: CategoriaTotal[]; onSelect: (categoria: string) => void }) {
   const max = Math.max(0, ...rows.map((r) => r.total));
   const totalGeneral = rows.reduce((sum, r) => sum + r.total, 0);
@@ -393,11 +344,11 @@ function CategoriaRankedBarList({ rows, onSelect }: { rows: CategoriaTotal[]; on
 }
 
 const ESTATUS_HEX_COLORS: Record<string, string> = {
-  FINALIZADO: '#10b981',
-  'EN SEGUIMIENTO': '#f59e0b',
-  CANCELADO: '#fb7185'
+  FINALIZADO: '#3f8f6b',
+  'EN SEGUIMIENTO': '#d99a2b',
+  CANCELADO: '#c8665f'
 };
-const DONUT_FALLBACK_COLORS = ['#6366f1', '#0ea5e9', '#a855f7', '#94a3b8'];
+const DONUT_FALLBACK_COLORS = ['#2f4a5a', '#6a8798', '#96a99e', '#b8c3ca'];
 
 const DONUT_SIZE = 280;
 const DONUT_CENTER = DONUT_SIZE / 2;
@@ -444,7 +395,7 @@ function EstatusDonutChart({ rows }: { rows: EstatusTotal[] }) {
   return (
     <div className="h-full flex items-center gap-6 flex-wrap justify-center">
       <svg viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`} className="shrink-0 -rotate-90 w-full max-w-[280px] h-auto">
-        <circle cx={DONUT_CENTER} cy={DONUT_CENTER} r={DONUT_RADIUS} fill="none" stroke="#f1f5f9" strokeWidth={strokeWidth} />
+        <circle cx={DONUT_CENTER} cy={DONUT_CENTER} r={DONUT_RADIUS} fill="none" stroke="#e6ebee" strokeWidth={strokeWidth} />
         {segments.map((s) => (
           <circle
             key={s.estatus}
@@ -498,9 +449,9 @@ function DurationBarList({ rows }: { rows: { categoria: string; duracion: string
 }
 
 const PLAZA_CHART_COLORS = [
-  '#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#fb7185',
-  '#a855f7', '#14b8a6', '#f97316', '#84cc16', '#ec4899',
-  '#8b5cf6', '#06b6d4', '#eab308', '#f43f5e', '#22c55e'
+  '#2f4a5a', '#7f9a8a', '#d99a2b', '#c8665f', '#5b86a6',
+  '#3f8f6b', '#b7c6a3', '#8a99a3', '#3d8a8f', '#8a6a8f',
+  '#c9b48a', '#b5683d', '#4f5d8a', '#8a9a4b', '#c98aa0'
 ];
 
 function PlazaVerticalBarChart({ rows }: { rows: PlazaTotal[] }) {

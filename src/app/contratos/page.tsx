@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MultiSelectFilter } from '@/components/MultiSelectFilter';
 import { fetchJsonCached } from '@/lib/fetchCache';
 import type { ContratoRow } from '@/domain/usecases/GetContratosTableRows';
+import { ErrorAlert, LoadingBanner, PageHeader } from '@/components/ui';
 
 interface FilterOptions {
   ciudades: string[];
@@ -59,20 +60,10 @@ export default function ContratosPage() {
 
   return (
     <div className="p-6">
-      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center px-6 border-b border-slate-200 bg-white">
-        <h1 className="text-lg font-bold">Contratos</h1>
-      </header>
+      <PageHeader title="Contratos" />
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-rose-400 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600">
-          Error: {error}
-        </div>
-      )}
-      {loading && (
-        <div className="mb-4 rounded-lg border border-indigo-400 bg-indigo-50 px-3.5 py-2.5 text-sm text-indigo-600">
-          Cargando…
-        </div>
-      )}
+      {error && <ErrorAlert message={error} />}
+      {loading && <LoadingBanner />}
 
       <div className="flex items-end gap-4 flex-wrap bg-white rounded-lg shadow-sm px-4.5 py-3.5 mb-5">
         <MultiSelectFilter label="Ciudad" options={filterOptions.ciudades} value={filters.ciudades ?? filterOptions.ciudades} onChange={(v) => setFilters((f) => ({ ...f, ciudades: v }))} />

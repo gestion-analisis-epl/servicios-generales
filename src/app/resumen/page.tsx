@@ -8,6 +8,7 @@ import type { CompanyTotal, CompanyOffice } from '@/domain/usecases/GetMonthlyTo
 import type { PaymentDateTotal } from '@/domain/usecases/GetUpcomingPaymentTotals';
 import type { OfficeTableRow } from '@/domain/usecases/GetOfficesTableRows';
 import type { GanttRow } from '@/domain/usecases/GetUpcomingExpirationsGantt';
+import { Card, CardsRow, ErrorAlert, LoadingBanner, PageHeader, Panel, ShareBar, formatShare } from '@/components/ui';
 
 interface FilterOptions {
   ciudades: string[];
@@ -70,20 +71,10 @@ export default function ResumenPage() {
 
   return (
     <div className="p-6">
-      <header className="h-16 -mx-6 -mt-6 mb-6 flex items-center px-6 border-b border-slate-200 bg-white">
-        <h1 className="text-lg font-bold">Resumen General</h1>
-      </header>
+      <PageHeader title="Resumen General" />
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-rose-400 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600">
-          Error: {error}
-        </div>
-      )}
-      {loading && (
-        <div className="mb-4 rounded-lg border border-indigo-400 bg-indigo-50 px-3.5 py-2.5 text-sm text-indigo-600">
-          Cargando…
-        </div>
-      )}
+      {error && <ErrorAlert message={error} />}
+      {loading && <LoadingBanner />}
 
       <div className="flex items-end gap-4 flex-wrap bg-white rounded-lg shadow-sm px-4.5 py-3.5 mb-5">
         <MultiSelectFilter label="Ciudad" options={filterOptions.ciudades} value={filters.ciudades ?? filterOptions.ciudades} onChange={(v) => setFilters((f) => ({ ...f, ciudades: v }))} />
@@ -96,27 +87,27 @@ export default function ResumenPage() {
         <>
           <h2 className="text-[15px] font-semibold mb-3">Oficinas</h2>
           <CardsRow>
-            <Card accent="primary" icon={<IconBuilding />} label="Total Oficinas" value={data.summary.totalOficinas} />
-            <Card accent="success" icon={<IconCheck />} label="Vigentes" value={data.summary.totalVigentes} />
-            <Card accent="danger" icon={<IconWarning />} label="Vencidos" value={data.summary.totalVencidos} />
-            <Card accent="danger" icon={<IconAlertClock />} label="Urgentes" value={data.summary.totalCriticos} />
-            <Card accent="warning" icon={<IconClock />} label="Renta Mensual" value={formatMoney(data.summary.totalRentaMensual)} />
+            <Card accent="primary" icon={<IconBuilding />} label="Total Oficinas" value={data.summary.totalOficinas} subtitle="Portafolio completo" chart={<ShareBar part={1} total={1} accent="primary" />} />
+            <Card accent="success" icon={<IconCheck />} label="Vigentes" value={data.summary.totalVigentes} subtitle={formatShare(data.summary.totalVigentes, data.summary.totalOficinas)} chart={<ShareBar part={data.summary.totalVigentes} total={data.summary.totalOficinas} accent="success" />} />
+            <Card accent="danger" icon={<IconWarning />} label="Vencidos" value={data.summary.totalVencidos} subtitle={formatShare(data.summary.totalVencidos, data.summary.totalOficinas)} chart={<ShareBar part={data.summary.totalVencidos} total={data.summary.totalOficinas} accent="danger" />} />
+            <Card accent="danger" icon={<IconAlertClock />} label="Urgentes" value={data.summary.totalCriticos} subtitle={formatShare(data.summary.totalCriticos, data.summary.totalOficinas)} chart={<ShareBar part={data.summary.totalCriticos} total={data.summary.totalOficinas} accent="danger" />} />
+            <Card accent="warning" icon={<IconClock />} label="Renta Mensual" value={formatMoney(data.summary.totalRentaMensual)} subtitle="Oficinas no vencidas" />
           </CardsRow>
 
           <div className="flex gap-4 flex-wrap mb-6">
-            <Panel title="Total Mensual por Empresa">
+            <Panel fill title="Total Mensual por Empresa">
               <RankedBarList rows={data.monthlyTotalByCompany} onSelect={setSelectedCompany} />
             </Panel>
-            <Panel title="Próximas Fechas de Pago">
+            <Panel fill title="Próximas Fechas de Pago">
               <FunnelList rows={data.upcomingPaymentTotals} onSelect={setSelectedPaymentDate} />
             </Panel>
           </div>
 
-          <Panel title="Oficinas según Estado de Vigencia" className="mb-6">
+          <Panel fill title="Oficinas según Estado de Vigencia" className="mb-6">
             <OfficesTable rows={data.officesTableRows} />
           </Panel>
 
-          <Panel title="Próximos a Vencer">
+          <Panel fill title="Próximos a Vencer">
             <GanttChart rows={data.upcomingExpirationsGantt} />
           </Panel>
         </>
@@ -186,9 +177,9 @@ function PaymentDateDialog({ row, onClose }: { row: PaymentDateTotal; onClose: (
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-white rounded-[10px] shadow-lg w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900/55 backdrop-blur-[2px] dialog-overlay p-4" onClick={onClose}>
+      <div className="bg-white rounded-[10px] shadow-2xl border border-slate-200 dialog-panel w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 rounded-t-[10px]">
           <h2 className="text-sm font-semibold">
             Pagos con vencimiento {row.fecha} <span className="text-slate-400 font-normal">({sorted.length}{sorted.length !== rows.length ? ` de ${rows.length}` : ''})</span>
           </h2>
@@ -339,12 +330,12 @@ function CompanyDialog({ row, onClose }: { row: CompanyTotal; onClose: () => voi
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900/55 backdrop-blur-[2px] dialog-overlay p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-[10px] shadow-lg w-full max-w-[95vw] xl:max-w-[700px] h-[85vh] flex flex-col"
+        className="bg-white rounded-[10px] shadow-2xl border border-slate-200 dialog-panel w-full max-w-[95vw] xl:max-w-[700px] h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 gap-4">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 rounded-t-[10px] gap-4">
           <h2 className="text-sm font-semibold whitespace-nowrap">
             {row.empresa} <span className="text-slate-400 font-normal">({sorted.length}{sorted.length !== rows.length ? ` de ${rows.length}` : ''})</span>
           </h2>
@@ -431,27 +422,6 @@ function CompanyDialog({ row, onClose }: { row: CompanyTotal; onClose: () => voi
   );
 }
 
-function CardsRow({ children }: { children: React.ReactNode }) {
-  return <div className="flex gap-4 flex-wrap mb-6">{children}</div>;
-}
-
-const ACCENT_CLASSES: Record<string, string> = {
-  primary: 'bg-indigo-500',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-rose-500'
-};
-
-function Card({ accent, icon, label, value }: { accent: keyof typeof ACCENT_CLASSES; icon: React.ReactNode; label: string; value: string | number }) {
-  return (
-    <div className="bg-white rounded-[10px] shadow-sm px-5 py-4.5 flex-1 min-w-[180px]">
-      <div className={`w-10 h-10 rounded-lg mb-3 flex items-center justify-center text-white ${ACCENT_CLASSES[accent]}`}>{icon}</div>
-      <h3 className="text-xs uppercase text-slate-400 tracking-wide mb-1.5">{label}</h3>
-      <p className="text-[22px] font-bold">{value}</p>
-    </div>
-  );
-}
-
 function icon(path: React.ReactNode) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
@@ -465,15 +435,6 @@ const IconCheck = () => icon(<path d="M20 6 9 17l-5-5" />);
 const IconBuilding = () => icon(<><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>);
 const IconWarning = () => icon(<><path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /></>);
 const IconAlertClock = () => icon(<><circle cx="12" cy="12" r="9" /><path d="M12 8v4l2.5 2.5" /></>);
-
-function Panel({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`bg-white rounded-[10px] shadow-sm p-5 flex-1 min-w-[320px] flex flex-col ${className}`}>
-      <h2 className="text-sm font-semibold mb-4">{title}</h2>
-      <div className="flex-1 flex flex-col min-h-0">{children}</div>
-    </div>
-  );
-}
 
 function RankedBarList({ rows, onSelect }: { rows: CompanyTotal[]; onSelect: (row: CompanyTotal) => void }) {
   const max = Math.max(0, ...rows.map((r) => r.total));

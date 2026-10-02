@@ -1,17 +1,133 @@
 @import "tailwindcss";
 
+/*
+  Identidad Grupo EPL
+  navy  #465F6D  (logotipo "grupo" y marca)
+  sage  #96A99E  (logotipo "epl")
+  mist  #D1DBC4  (figura del logotipo)
+  La escala "indigo" de Tailwind se redefine con la paleta de marca, de modo que
+  todas las clases indigo-* existentes pasan a usar los colores corporativos.
+*/
 :root {
-  --background: #f8fafc;
-  --foreground: #1f2430;
+  --background: #f1f4f6;
+  --foreground: #16232c;
+  --ink-navy: #16232c;
+  --brand-navy: #465f6d;
+  --brand-sage: #96a99e;
+  --brand-mist: #d1dbc4;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-poppins);
+  --font-sans: var(--font-figtree);
+  --font-display: var(--font-sora);
+
+  --color-indigo-50: #eef3f6;
+  --color-indigo-100: #dbe5eb;
+  --color-indigo-200: #bccdd7;
+  --color-indigo-300: #92aab9;
+  --color-indigo-400: #6a8798;
+  --color-indigo-500: #53707f;
+  --color-indigo-600: #2f4a5a;
+  --color-indigo-700: #263d4a;
+  --color-indigo-800: #1d303b;
+  --color-indigo-900: #16232c;
+
+  --color-slate-50: #f1f4f6;
+  --color-slate-100: #e6ebee;
+  --color-slate-200: #d6dde2;
+  --color-slate-300: #b8c3ca;
+  --color-slate-400: #8a99a3;
+  --color-slate-500: #62727c;
+  --color-slate-600: #4a5961;
+  --color-slate-700: #36434a;
+  --color-slate-800: #232e34;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1200px 500px at 100% -10%, rgb(209 219 196 / 0.35), transparent 60%),
+    var(--background);
   color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    letter-spacing: 0.08em;
+  }
+
+  /* Encabezado de página: línea de acento con los colores del logotipo */
+  header {
+    position: relative;
+  }
+
+  header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--brand-navy) 0 18%, var(--brand-sage) 18% 30%, var(--brand-mist) 30% 38%, transparent 38%);
+  }
+
+  ::selection {
+    background: var(--brand-mist);
+    color: var(--ink-navy);
+  }
+}
+
+/* Entrada escalonada de tarjetas y paneles */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise-in {
+  animation: rise-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in {
+    animation: none;
+  }
+}
+
+/* Diálogos */
+@keyframes dialog-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialog-pop {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.dialog-overlay { animation: dialog-fade 0.2s ease-out both; }
+.dialog-panel { animation: dialog-pop 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay, .dialog-panel { animation: none; }
+}
+
+/* Tablas: encabezados con tracking de etiqueta */
+@layer base {
+  th { letter-spacing: 0.06em; }
 }
