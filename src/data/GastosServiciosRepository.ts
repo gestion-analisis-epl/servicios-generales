@@ -16,7 +16,16 @@ export async function findAllGastosServicios(): Promise<GastoServicio[]> {
       ciudad: text(pick(row, 'CIUDAD')),
       categoria: normalizeCategoria(text(pick(row, 'CATEGORIA'))),
       monto: parseMoney(pick(row, 'IMPORTE DEPOSITADO')),
-      montoSolicitado: parseMoney(pick(row, 'IMPORTE SOLICITADO'))
+      montoSolicitado: parseMoney(pick(row, 'IMPORTE SOLICITADO')),
+      montoAprobado: parseMoney(pick(row, 'IMPORTE APROBADA')),
+      montoComprobado: parseMoney(pick(row, 'IMPORTE COMPROBADO')),
+      montoSaldo: parseMoney(pick(row, 'IMPORTE SALDO')),
+      fechaFinal: parseSheetDate(pick(row, 'FECHA FINAL')),
+      solicitante: text(pick(row, 'SOLICITANTE')),
+      autorizador: text(pick(row, 'AUTORIZADOR')),
+      formaPago: text(pick(row, 'FORMA PAGO')),
+      observaciones: text(pick(row, 'OBSERVACIONES')),
+      motivoRechazo: text(pick(row, 'MOTIVO RECHAZO'))
     }))
     .filter((g) => g.categoria !== '' || g.codigo !== '' || g.monto !== 0 || g.montoSolicitado !== 0);
 }

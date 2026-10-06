@@ -9,4 +9,13 @@ export interface GastoServicio {
   categoria: string;
   monto: number;
   montoSolicitado: number;
+  montoAprobado: number;
+  montoComprobado: number;
+  montoSaldo: number;
+  fechaFinal: string;
+  solicitante: string;
+  autorizador: string;
+  formaPago: string;
+  observaciones: string;
+  motivoRechazo: string;
 }

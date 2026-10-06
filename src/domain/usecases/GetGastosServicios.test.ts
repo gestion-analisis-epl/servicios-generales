@@ -11,7 +11,10 @@ import {
 } from './GetGastosServicios';
 
 function gasto(fields: Partial<GastoServicio>): GastoServicio {
-  return { folio: 'REC1', fecha: '', estatus: 'DEPOSITADO', codigo: '', ciudad: '', categoria: 'Limpieza', monto: 0, montoSolicitado: 0, ...fields };
+  return { folio: 'REC1', fecha: '', estatus: 'DEPOSITADO', codigo: '', ciudad: '', categoria: 'Limpieza', monto: 0, montoSolicitado: 0,
+    montoAprobado: 0, montoComprobado: 0, montoSaldo: 0, fechaFinal: '', solicitante: '', autorizador: '',
+    formaPago: '', observaciones: '', motivoRechazo: '', ...fields
+  };
 }
 
 const offices = [createOffice({ codigo: 'AGS-EPL', ciudad: 'AGUASCALIENTES', empresa: 'EPL' })];
@@ -37,6 +40,7 @@ describe('buildGastosRows', () => {
       const rows = buildGastosRows([gasto({ ciudad: 'QUERETARO', categoria: 'Garrafones', monto: 1528 })], offices);
       expect(rows.find((r) => r.categoria === 'Garrafones')?.monto).toBe(528);
       expect(rows.find((r) => r.categoria === 'Limpieza')?.monto).toBe(1000);
+      expect(rows.every((r) => r.dividido)).toBe(true);
     });
 
     it('uses 660 for folio REC01000001658', () => {
@@ -66,7 +70,7 @@ describe('buildGastosRows', () => {
     it('does not split garrafones of other cities', () => {
       const rows = buildGastosRows([gasto({ ciudad: 'TAMPICO', categoria: 'Garrafones', monto: 1528 })], offices);
       expect(rows).toHaveLength(1);
-      expect(rows[0]).toMatchObject({ categoria: 'Garrafones', monto: 1528 });
+      expect(rows[0]).toMatchObject({ categoria: 'Garrafones', monto: 1528, dividido: false });
     });
 
     it('does not touch limpieza rows in Queretaro', () => {

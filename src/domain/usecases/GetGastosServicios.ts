@@ -9,16 +9,10 @@ export interface GastosFilters {
   hasta?: string;
 }
 
-export interface GastoServicioRow {
-  folio: string;
-  fecha: string;
-  estatus: string;
-  codigo: string;
+export interface GastoServicioRow extends GastoServicio {
   empresa: string;
-  ciudad: string;
-  categoria: string;
-  monto: number;
-  montoSolicitado: number;
+  // Fila derivada de un pago de Querétaro repartido entre Garrafones y Limpieza.
+  dividido: boolean;
 }
 
 export interface GastoCategoriaTotal {
@@ -46,15 +40,10 @@ export function buildGastosRows(gastos: GastoServicio[], offices: Office[]): Gas
     .map((g) => {
       const office = g.codigo ? officeByCodigo.get(g.codigo) : undefined;
       return {
-        folio: g.folio,
-        fecha: g.fecha,
-        estatus: g.estatus,
-        codigo: g.codigo,
+        ...g,
         empresa: office?.empresa ?? '',
         ciudad: g.ciudad || office?.ciudad || '',
-        categoria: g.categoria,
-        monto: g.monto,
-        montoSolicitado: g.montoSolicitado
+        dividido: false
       };
     });
 
@@ -122,9 +111,9 @@ function splitQueretaroGarrafones(row: GastoServicioRow): GastoServicioRow[] {
 
   const limpieza = row.monto - garrafones;
   const limpiezaSolicitado = row.montoSolicitado - garrafonesSolicitado;
-  const result: GastoServicioRow[] = [{ ...row, monto: garrafones, montoSolicitado: garrafonesSolicitado }];
+  const result: GastoServicioRow[] = [{ ...row, monto: garrafones, montoSolicitado: garrafonesSolicitado, dividido: true }];
   if (limpieza > 0 || limpiezaSolicitado > 0) {
-    result.push({ ...row, categoria: 'Limpieza', monto: limpieza, montoSolicitado: limpiezaSolicitado });
+    result.push({ ...row, categoria: 'Limpieza', monto: limpieza, montoSolicitado: limpiezaSolicitado, dividido: true });
   }
   return result;
 }
