@@ -16,6 +16,8 @@ interface Filters {
   ciudades?: string[];
   categorias?: string[];
   estatuses?: string[];
+  desde?: string;
+  hasta?: string;
 }
 
 interface ServiciosData {
@@ -43,6 +45,8 @@ export default function ServiciosPage() {
       if (filters.ciudades !== undefined) params.set('ciudades', filters.ciudades.join(','));
       if (filters.categorias !== undefined) params.set('categorias', filters.categorias.join(','));
       if (filters.estatuses !== undefined) params.set('estatuses', filters.estatuses.join(','));
+      if (filters.desde) params.set('desde', filters.desde);
+      if (filters.hasta) params.set('hasta', filters.hasta);
 
       try {
         const result = await fetchJsonCached<{ filterOptions: FilterOptions; data: ServiciosData }>(
@@ -78,6 +82,8 @@ export default function ServiciosPage() {
         <MultiSelectFilter label="Ciudad" options={filterOptions.ciudades} value={filters.ciudades ?? filterOptions.ciudades} onChange={(v) => setFilters((f) => ({ ...f, ciudades: v }))} />
         <MultiSelectFilter label="Categoría" options={filterOptions.categorias} value={filters.categorias ?? filterOptions.categorias} onChange={(v) => setFilters((f) => ({ ...f, categorias: v }))} />
         <MultiSelectFilter label="Estatus" options={filterOptions.estatuses} value={filters.estatuses ?? filterOptions.estatuses} onChange={(v) => setFilters((f) => ({ ...f, estatuses: v }))} />
+        <DateFilter label="Desde" value={filters.desde} max={filters.hasta} onChange={(v) => setFilters((f) => ({ ...f, desde: v }))} />
+        <DateFilter label="Hasta" value={filters.hasta} min={filters.desde} onChange={(v) => setFilters((f) => ({ ...f, hasta: v }))} />
         <button onClick={() => setFilters(DEFAULT_FILTERS)} className="rounded-md px-4 py-1.5 text-sm bg-white border border-slate-200">Limpiar</button>
       </div>
 
@@ -106,6 +112,28 @@ export default function ServiciosPage() {
       <div className="bg-white rounded-[10px] shadow-sm p-5">
         <ServiciosTable rows={data.rows} />
       </div>
+    </div>
+  );
+}
+
+function DateFilter({ label, value, min, max, onChange }: {
+  label: string;
+  value?: string;
+  min?: string;
+  max?: string;
+  onChange: (next: string | undefined) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-[11px] uppercase text-slate-400 tracking-wide">{label}</label>
+      <input
+        type="date"
+        value={value ?? ''}
+        min={min}
+        max={max}
+        onChange={(e) => onChange(e.target.value || undefined)}
+        className="border border-slate-200 rounded-md px-2 py-1.5 text-sm bg-white"
+      />
     </div>
   );
 }

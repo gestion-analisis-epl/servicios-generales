@@ -5,6 +5,8 @@ export interface GastosFilters {
   ciudades?: string[];
   categorias?: string[];
   estatuses?: string[];
+  desde?: string;
+  hasta?: string;
 }
 
 export interface GastoServicioRow {
@@ -67,6 +69,12 @@ export function filterGastosRows(rows: GastoServicioRow[], filters: GastosFilter
     if (filters.ciudades !== undefined && !filters.ciudades.includes(row.ciudad)) return false;
     if (filters.categorias !== undefined && !filters.categorias.includes(row.categoria)) return false;
     if (estatuses !== undefined && !estatuses.includes(normalize(row.estatus))) return false;
+    if (filters.desde || filters.hasta) {
+      const dia = row.fecha.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+      if (!dia) return false;
+      if (filters.desde && dia < filters.desde) return false;
+      if (filters.hasta && dia > filters.hasta) return false;
+    }
     return true;
   });
 }

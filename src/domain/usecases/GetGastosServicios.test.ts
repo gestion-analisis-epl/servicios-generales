@@ -99,6 +99,23 @@ describe('filterGastosRows / totals', () => {
     expect(filterGastosRows(rows, { estatuses: [] })).toHaveLength(0);
   });
 
+  it('filters by date range on the ISO day, inclusive, and drops rows without a valid date when a range is set', () => {
+    const dated = buildGastosRows(
+      [
+        gasto({ folio: 'A', fecha: '2026-10-01' }),
+        gasto({ folio: 'B', fecha: '2026-10-05T10:00:00' }),
+        gasto({ folio: 'C', fecha: '2026-11-01' }),
+        gasto({ folio: 'D', fecha: '' })
+      ],
+      offices
+    );
+    const folios = (f: Parameters<typeof filterGastosRows>[1]) => filterGastosRows(dated, f).map((r) => r.folio).sort();
+    expect(folios({ desde: '2026-10-01', hasta: '2026-10-05' })).toEqual(['A', 'B']);
+    expect(folios({ desde: '2026-10-02' })).toEqual(['B', 'C']);
+    expect(folios({ hasta: '2026-10-01' })).toEqual(['A']);
+    expect(folios({})).toEqual(['A', 'B', 'C', 'D']);
+  });
+
   it('lists known categories first and then any extra found in data', () => {
     const extra = buildGastosRows([gasto({ categoria: 'Vigilancia' })], offices);
     expect(getGastosCategorias(extra)).toEqual(['Limpieza', 'CFE', 'Agua', 'Garrafones', 'Vigilancia']);

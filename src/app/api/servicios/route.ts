@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
   const filters = {
     ciudades: parseList(params, 'ciudades'),
     categorias: parseList(params, 'categorias'),
-    estatuses: parseList(params, 'estatuses')
+    estatuses: parseList(params, 'estatuses'),
+    desde: parseDate(params, 'desde'),
+    hasta: parseDate(params, 'hasta')
   };
 
   const [offices, gastos] = await Promise.all([findAllOffices(), findAllGastosServicios()]);
@@ -36,6 +38,11 @@ export async function GET(request: NextRequest) {
 
 function uniqueSorted(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean))).sort();
+}
+
+function parseDate(params: URLSearchParams, key: string): string | undefined {
+  const value = params.get(key) || '';
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined;
 }
 
 function parseList(params: URLSearchParams, key: string): string[] | undefined {
