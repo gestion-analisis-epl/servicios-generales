@@ -127,6 +127,33 @@ body {
   .dialog-overlay, .dialog-panel { animation: none; }
 }
 
+/* Scrollbars discretos: delgados, sin pista visible y con el pulgar redondeado */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(138 153 163 / 0.35);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(138 153 163 / 0.65);
+}
+
+@supports (-moz-appearance: none) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(138 153 163 / 0.45) transparent;
+  }
+}
+
 /* Tablas: encabezados con tracking de etiqueta */
 @layer base {
   th { letter-spacing: 0.06em; }

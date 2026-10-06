@@ -6,12 +6,14 @@ import { TicketsDialog, TicketDetailDialog } from '@/components/TicketDialogs';
 import type { Office } from '@/domain/entities/Office';
 import type { TicketDetailRow } from '@/domain/usecases/GetTicketsDetail';
 import type { CategoriaTotal } from '@/domain/usecases/GetTicketsByCategoria';
+import type { GastoCategoriaTotal } from '@/domain/usecases/GetGastosServicios';
 import { Card, ErrorAlert, LoadingBanner, PageHeader, Panel } from '@/components/ui';
 
 interface FichaData {
   offices: Office[];
   ticketsByOffice: Record<string, TicketDetailRow[]>;
   ticketCategoriaTotalsByOffice: Record<string, CategoriaTotal[]>;
+  gastosByOffice: Record<string, GastoCategoriaTotal[]>;
 }
 
 export default function FichaPage() {
@@ -58,6 +60,7 @@ export default function FichaPage() {
           office={selected}
           tickets={data.ticketsByOffice[selected.codigo] || []}
           categorias={data.ticketCategoriaTotalsByOffice[selected.codigo] || []}
+          gastos={data.gastosByOffice[selected.codigo.trim()] || []}
         />
       )}
     </div>
@@ -151,10 +154,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function OfficeFicha({ office, tickets, categorias }: {
+function OfficeFicha({ office, tickets, categorias, gastos }: {
   office: Office;
   tickets: TicketDetailRow[];
   categorias: CategoriaTotal[];
+  gastos: GastoCategoriaTotal[];
 }) {
   const [ticketsDialog, setTicketsDialog] = useState<{ title: string; categoria: string | null } | null>(null);
   const [ticketDetailRow, setTicketDetailRow] = useState<TicketDetailRow | null>(null);
@@ -235,6 +239,20 @@ function OfficeFicha({ office, tickets, categorias }: {
 
         <Panel minWidth={300} title="Observaciones">
           <p className="text-sm text-slate-700 whitespace-pre-wrap">{office.observaciones || 'Sin observaciones.'}</p>
+        </Panel>
+      </div>
+
+      <div className="flex gap-4 flex-wrap mb-4">
+        <Panel minWidth={300} title="Gastos">
+          {gastos.length === 0 ? (
+            <p className="text-sm text-slate-400">Sin gastos depositados para esta oficina.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {gastos.map((g) => (
+                <Field key={g.categoria} label={g.categoria} value={formatMoney(g.total)} />
+              ))}
+            </div>
+          )}
         </Panel>
       </div>
 

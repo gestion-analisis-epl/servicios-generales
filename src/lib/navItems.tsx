@@ -25,6 +25,12 @@ export const NAV_ITEMS: NavItem[] = [
     keywords: ['calendario', 'factura', 'vencimiento', 'fecha límite', 'total mensual']
   },
   {
+    href: '/servicios',
+    label: 'Pagos de servicios',
+    icon: <path d="M13 2L4 14h7l-1 8 9-12h-7z" />,
+    keywords: ['limpieza', 'cfe', 'agua', 'garrafones', 'gastos', 'servicios']
+  },
+  {
     href: '/vigencias',
     label: 'Vigencias',
     icon: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></>,
